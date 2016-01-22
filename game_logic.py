@@ -1,12 +1,9 @@
-class Cell:
-    EMPTY = 0
-    FILLED = 1
-    FALLING = 2
+import field
 
 
 class Game:
     """
-    Game logic and state
+    Game logic
     """
-    def __init__(self, field_width, field_height):
-        self.field = [[Cell.EMPTY for _ in range(field_height)] for _ in range(field_width)]
+    def __init__(self, game_field: field.Field):
+        self._field = game_field

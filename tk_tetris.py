@@ -1,6 +1,10 @@
 import os
+import threading
 import tkinter as tk
 
+import time
+
+import field
 import game_logic
 
 # Default key binds
@@ -24,7 +28,8 @@ root = tk.Tk()
 
 # Load resources
 resources_path = os.path.join('Resources/Default')
-filled_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell.png"))
+filled_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_filled.png"))
+falling_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falling.png"))
 background_image = tk.PhotoImage(file=os.path.join(resources_path, "background.png"))
 
 
@@ -59,16 +64,32 @@ def process_move_right():
 
 def process_rotate():
     print("Process rotate...")
-    clear_cell(1, 1)
 
 
 def process_force_down():
     print("Process force down...")
-    draw_cell(1, 1)
+    points = [(6, 2), (6, 3), (6, 4), (5, 4), (7, 4)]
+    for p in points:
+        game_field.get_cell(p[0], p[1]).state = field.CellState.FILLED
+    repaint_all()
 
 
 def process_pause():
     print("Process pause...")
+    test_draw()
+
+
+def test_draw():
+    import time
+    import random
+
+    x_list = list(range(FIELD_WIDTH))
+    y_list = list(range(FIELD_HEIGHT))
+    for i in range(10):
+        x = random.choice(x_list)
+        y = random.choice(y_list)
+        state = random.choice([e for e in field.CellState])
+        game_field.get_cell(x, y).state = state
 
 
 # Bind keyboard listener
@@ -86,38 +107,35 @@ game_score = tk.Label(master=root, text="Scores: 0")
 game_score.grid(column=1, row=0, sticky=tk.N)
 
 
-def draw_cell(x, y):
-    print("Drawing ", x, y)
-    # Check that we tries to fill an existing unfilled cell:
-    if 0 <= x <= FIELD_WIDTH - 1 and 0 <= y <= FIELD_HEIGHT - 1 and ui_cells[x][y] is None:
-        _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
-        _y = y * CELL_SIZE + 2
-        img_index = ui_field.create_image(_x, _y, anchor=tk.NW, image=filled_cell_image)
-        ui_cells[x][y] = img_index
-        ui_field.update()
-
-
-def clear_cell(x, y):
-    # Check that we tries to fill an existing cell:
-        if 0 <= x <= FIELD_WIDTH - 1 and 0 <= y <= FIELD_HEIGHT - 1:
-            ui_field.delete(ui_cells[x][y])
-            ui_cells[x][y] = None
-            ui_field.update()
-
-
 def repaint_all():
-    pass
+    for x in range(FIELD_WIDTH):
+        for y in range(FIELD_HEIGHT):
+            cell = game_field.get_cell(x, y)
+            print(">>", cell.state)
+            if cell.state in (field.CellState.FILLED, field.CellState.FALLING) and cell.image_id is None:
+                _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
+                _y = y * CELL_SIZE + 2
+                img = filled_cell_image if cell.state == field.CellState.FILLED else falling_cell_image
+                cell.image_id = ui_field.create_image(_x, _y, anchor=tk.NW, image=img)
+                ui_field.update()
+            elif cell.state == field.CellState.EMPTY and cell.image_id is not None:
+                ui_field.delete(cell.image_id)
+                cell.image_id = None
+                ui_field.update()
 
 
-# Create game instance
-game = game_logic.Game(FIELD_WIDTH, FIELD_HEIGHT)
-# Create container for filled cells
-ui_cells = [[None for _ in range(FIELD_HEIGHT)] for _ in range(FIELD_WIDTH)]
+# Game field binds UI and logic together
+game_field = field.Field(FIELD_WIDTH, FIELD_HEIGHT)
 
-game.field[0][4] = game_logic.Cell.FALLING
-game.field[2][5] = game_logic.Cell.FALLING
-game.field[3][1] = game_logic.Cell.FALLING
-repaint_all()
+
+def tick():
+    while True:
+        test_draw()
+        repaint_all()
+        time.sleep(2)
+
+tick_thread = threading.Thread(target=tick)
+tick_thread.start()
 
 # Start application
 root.mainloop()
