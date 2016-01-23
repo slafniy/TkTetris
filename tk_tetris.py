@@ -1,13 +1,14 @@
 import os
 import threading
 import tkinter as tk
-
 import time
 
 import field
 import game_logic
 
+
 # Default key binds
+
 MOVE_LEFT = 37  # Left arrow
 MOVE_RIGHT = 39  # Right arrow
 ROTATE = 38  # Up arrow
@@ -111,7 +112,6 @@ def repaint_all():
     for x in range(FIELD_WIDTH):
         for y in range(FIELD_HEIGHT):
             cell = game_field.get_cell(x, y)
-            print(">>", cell.state)
             if cell.state in (field.CellState.FILLED, field.CellState.FALLING) and cell.image_id is None:
                 _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
                 _y = y * CELL_SIZE + 2
@@ -124,18 +124,27 @@ def repaint_all():
                 ui_field.update()
 
 
+def tick():
+    test_draw()
+    repaint_all()
+
+
+def on_close():
+    # tick_thread.stop()
+    # raise SystemExit
+    root.destroy()
+    print("!! Bye !!")
+
+root.protocol("WM_DELETE_WINDOW", on_close)
+
 # Game field binds UI and logic together
 game_field = field.Field(FIELD_WIDTH, FIELD_HEIGHT)
 
-
-def tick():
-    while True:
-        test_draw()
-        repaint_all()
-        time.sleep(2)
-
-tick_thread = threading.Thread(target=tick)
+t = threading.Timer()
+# Start tick tread
+tick_thread = game_logic.TickThread(tick, tick_interval_sec=0.07)
 tick_thread.start()
+
 
 # Start application
 root.mainloop()

@@ -15,18 +15,6 @@ class Cell:
         self.state = CellState.EMPTY
         self.image_id = None
 
-    # def set_filled(self, image_id):
-    #     self.image_id = image_id
-    #     self.state = CellState.FILLED
-    #
-    # def set_falling(self, image_id):
-    #     self.image_id = image_id
-    #     self.state = CellState.FALLING
-    #
-    # def set_empty(self):
-    #     self.image_id = None
-    #     self.state = CellState.EMPTY
-
 
 class Field:
     """
