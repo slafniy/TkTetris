@@ -1,4 +1,5 @@
 import enum
+import threading
 
 
 class CellState(enum.Enum):
@@ -25,6 +26,7 @@ class Field:
         self.height = height
         # An internal structure to store field state (two-dimensional list)
         self._field = [[Cell() for _ in range(self.height)] for _ in range(self.width)]
+        self.lock = threading.Lock()
 
     def get_cell(self, x, y):
         """
@@ -37,4 +39,5 @@ class Field:
         if 0 <= x < self.width and 0 <= y < self.height:
             return self._field[x][y]
         else:
+            print("Cell ({}, {}) doesn't exist".format(x, y))
             return None

@@ -1,14 +1,17 @@
 import os
+import random
+import subprocess
 import threading
 import tkinter as tk
 import time
 
-import field
+import sys
+
+import field_impl
 import game_logic
 
 
 # Default key binds
-
 MOVE_LEFT = 37  # Left arrow
 MOVE_RIGHT = 39  # Right arrow
 ROTATE = 38  # Up arrow
@@ -47,10 +50,7 @@ def key_pressed(event):
     elif event.keycode == ROTATE:
         process_rotate()
     elif event.keycode == FORCE_DOWN:
-        # import threading
         process_force_down()
-        # t = threading.Thread(target=process_force_down())
-        # t.start()
     elif event.keycode == PAUSE:
         process_pause()
 
@@ -69,15 +69,11 @@ def process_rotate():
 
 def process_force_down():
     print("Process force down...")
-    points = [(6, 2), (6, 3), (6, 4), (5, 4), (7, 4)]
-    for p in points:
-        game_field.get_cell(p[0], p[1]).state = field.CellState.FILLED
-    repaint_all()
+    logic._figure.place(3, 5)
 
 
 def process_pause():
     print("Process pause...")
-    test_draw()
 
 
 def test_draw():
@@ -89,8 +85,8 @@ def test_draw():
     for i in range(10):
         x = random.choice(x_list)
         y = random.choice(y_list)
-        state = random.choice([e for e in field.CellState])
-        game_field.get_cell(x, y).state = state
+        state = random.choice([e for e in field_impl.CellState])
+        field.get_cell(x, y).state = state
 
 
 # Bind keyboard listener
@@ -111,40 +107,43 @@ game_score.grid(column=1, row=0, sticky=tk.N)
 def repaint_all():
     for x in range(FIELD_WIDTH):
         for y in range(FIELD_HEIGHT):
-            cell = game_field.get_cell(x, y)
-            if cell.state in (field.CellState.FILLED, field.CellState.FALLING) and cell.image_id is None:
+            cell = field.get_cell(x, y)
+            if cell.state in (field_impl.CellState.FILLED, field_impl.CellState.FALLING) and cell.image_id is None:
                 _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
                 _y = y * CELL_SIZE + 2
-                img = filled_cell_image if cell.state == field.CellState.FILLED else falling_cell_image
+                img = filled_cell_image if cell.state == field_impl.CellState.FILLED else falling_cell_image
                 cell.image_id = ui_field.create_image(_x, _y, anchor=tk.NW, image=img)
                 ui_field.update()
-            elif cell.state == field.CellState.EMPTY and cell.image_id is not None:
+            elif cell.state == field_impl.CellState.EMPTY and cell.image_id is not None:
                 ui_field.delete(cell.image_id)
                 cell.image_id = None
                 ui_field.update()
 
 
 def tick():
-    test_draw()
+    # test_draw()
+    logic.next_step()
     repaint_all()
 
 
 def on_close():
-    # tick_thread.stop()
-    # raise SystemExit
+    # TODO: find a way to stop tick_thread immediately
+    tick_thread.stop()
     root.destroy()
     print("!! Bye !!")
 
 root.protocol("WM_DELETE_WINDOW", on_close)
 
 # Game field binds UI and logic together
-game_field = field.Field(FIELD_WIDTH, FIELD_HEIGHT)
+field = field_impl.Field(FIELD_WIDTH, FIELD_HEIGHT)
+# Create game instance
+logic = game_logic.Game(field)
 
-t = threading.Timer()
+logic.spawn_z()  # TODO: remove
+
 # Start tick tread
-tick_thread = game_logic.TickThread(tick, tick_interval_sec=0.07)
+tick_thread = game_logic.TickThread(tick, tick_interval_sec=0.1)
 tick_thread.start()
-
 
 # Start application
 root.mainloop()
