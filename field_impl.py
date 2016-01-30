@@ -15,6 +15,7 @@ class Cell:
     def __init__(self):
         self.state = CellState.EMPTY
         self.image_id = None
+        self.need_img_replace = False
 
 
 class Field:

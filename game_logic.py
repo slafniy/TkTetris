@@ -38,7 +38,9 @@ class Game:
         """
         points_to_fill = copy.deepcopy(self._figure.current_points)
         for x, y in points_to_fill:
-            self._field.get_cell(x, y).state = field_impl.CellState.FILLED
+            cell = self._field.get_cell(x, y)
+            cell.state = field_impl.CellState.FILLED
+            cell.need_img_replace = True
         self._figure = None
 
 
@@ -79,12 +81,13 @@ class Figure:
                 return False
             else:
                 points.append((_x + x, _y + y))
-        # Remove old position
-        for _x, _y in self.current_points:
-            self._field.get_cell(_x, _y).state = field_impl.CellState.EMPTY
         # Add new position
         for _x, _y in points:
             self._field.get_cell(_x, _y).state = field_impl.CellState.FALLING
+        # Remove old position
+        for _x, _y in self.current_points:
+            if (_x, _y) not in points:
+                self._field.get_cell(_x, _y).state = field_impl.CellState.EMPTY
         print('Figure placed to {}, {}'.format(x, y))
         self.current_points = points
         self.position = [x, y]
@@ -114,7 +117,7 @@ class TickThread(threading.Thread):
     """
     def __init__(self, tick_function, tick_interval_sec=1):
         self._control_tick_interval = 0.05
-        assert tick_interval_sec > self._control_tick_interval, \
+        assert tick_interval_sec >= self._control_tick_interval, \
             "Tick interval shouldn't be less than {} sec".format(self._control_tick_interval)
         self.tick_interval = tick_interval_sec
         super().__init__(target=tick_function)

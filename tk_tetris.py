@@ -108,16 +108,16 @@ def repaint_all():
     for x in range(FIELD_WIDTH):
         for y in range(FIELD_HEIGHT):
             cell = field.get_cell(x, y)
+            if (cell.state == field_impl.CellState.EMPTY and cell.image_id is not None) or cell.need_img_replace:
+                ui_field.delete(cell.image_id)
+                cell.image_id = None
+                cell.need_img_replace = False
             if cell.state in (field_impl.CellState.FILLED, field_impl.CellState.FALLING) and cell.image_id is None:
                 _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
                 _y = y * CELL_SIZE + 2
                 img = filled_cell_image if cell.state == field_impl.CellState.FILLED else falling_cell_image
                 cell.image_id = ui_field.create_image(_x, _y, anchor=tk.NW, image=img)
-                ui_field.update()
-            elif cell.state == field_impl.CellState.EMPTY and cell.image_id is not None:
-                ui_field.delete(cell.image_id)
-                cell.image_id = None
-                ui_field.update()
+    ui_field.update()
 
 
 def tick():
