@@ -37,46 +37,67 @@ falling_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falli
 background_image = tk.PhotoImage(file=os.path.join(resources_path, "background.png"))
 
 
-def key_pressed(event):
+# class PressedKey:
+#     def __init__(self):
+#         self.key_code = None
+#         self.times_processed = 0
+
+
+class KeyboardHandler:
     """
-    Keyboard handler
+    Possibly this will work fine only on Windows
     """
-    # Make a decision what should we do with this key (Where is my switch keyword??)
-    if event.keycode == MOVE_LEFT:
-        process_move_left()
-    elif event.keycode == MOVE_RIGHT:
-        process_move_right()
-    elif event.keycode == ROTATE:
-        process_rotate()
-    elif event.keycode == FORCE_DOWN:
-        process_force_down()
-    elif event.keycode == PAUSE:
-        process_pause()
+    def __init__(self, logic: game_logic.Game, interval=0.1):
+        self._logic = logic
+        self._last_time = time.time()
+        self.interval = interval
+        self._pressed_keys = dict()
+        self._key_processor = threading.Thread(target=self._process_key)
+        self._key_processor.start()
+        self.processed_once = False
 
+    def on_key_press(self, event):
+        print('On key press')
+        if event.keycode not in self._pressed_keys:
+            self._pressed_keys[event.keycode] = 0
 
-def process_move_left():
-    logic.move_left()
+    def on_key_release(self, event):
+        print("On key release")
+        if event.keycode in self._pressed_keys:
+            self._pressed_keys.pop(event.keycode)
 
+    def _process_key(self):
+        while True:
+            for code in self._pressed_keys:
+                # Make a decision what should we do with this key (Where is my switch keyword??)
+                if code == MOVE_LEFT:
+                    self._process_move_left()
+                elif code == MOVE_RIGHT:
+                    self._process_move_right()
+                elif code == ROTATE:
+                    self._process_rotate()
+                elif code == FORCE_DOWN:
+                    self._process_force_down()
+                elif code == PAUSE:
+                    self._process_pause()
+                self.processed_once = True
+            time.sleep(self.interval)
 
-def process_move_right():
-    logic.move_right()
+    def _process_move_left(self):
+        self._logic.move_left()
 
+    def _process_move_right(self):
+        self._logic.move_right()
 
-def process_rotate():
-    pass
+    def _process_rotate(self):
+        pass
 
+    def _process_force_down(self):
+        pass
 
-def process_force_down():
-    pass
+    def _process_pause(self):
+        pass
 
-
-def process_pause():
-    pass
-
-
-# Bind keyboard listener
-# TODO: try KeyPress event
-root.bind(sequence='<Key>', func=key_pressed)
 
 # Draw background, draw labels etc.
 ui_field = tk.Canvas(master=root, background=COLOR_BACKGROUND,
@@ -87,6 +108,17 @@ ui_field.grid()
 ui_field.create_image(2, 2, anchor=tk.NW, image=background_image)
 game_score = tk.Label(master=root, text="Scores: 0")
 game_score.grid(column=1, row=0, sticky=tk.N)
+
+# Game field binds UI and logic together
+field = field_impl.Field(FIELD_WIDTH, FIELD_HEIGHT)
+# Create game instance
+logic = game_logic.Game(field)
+
+key_handler = KeyboardHandler(logic)
+
+# Bind keyboard listener
+root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
+root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
 
 def repaint_all():
@@ -122,15 +154,10 @@ def on_close():
 
 root.protocol("WM_DELETE_WINDOW", on_close)
 
-# Game field binds UI and logic together
-field = field_impl.Field(FIELD_WIDTH, FIELD_HEIGHT)
-# Create game instance
-logic = game_logic.Game(field)
-
 logic.spawn_z()  # TODO: remove
 
 # Start tick tread
-tick_thread = game_logic.TickThread(logic.next_step, tick_interval_sec=0.5)
+tick_thread = game_logic.TickThread(logic.next_step, tick_interval_sec=0.1)
 tick_thread.start()
 
 repaint_thread = threading.Thread(target=do_repaint, args=(60,))

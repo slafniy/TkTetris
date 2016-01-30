@@ -145,5 +145,5 @@ class TickThread(threading.Thread):
             self._target()
             self._time_counter = 0
             sleep_time = self.tick_interval - time.time() + start_time
-            print(sleep_time)
+            # print(sleep_time)
             time.sleep(sleep_time)
