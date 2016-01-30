@@ -34,15 +34,7 @@ ui_field.create_image(2, 2, anchor=tk.NW, image=background_image)
 game_score = tk.Label(master=root, text="Scores: 0")
 game_score.grid(column=1, row=0, sticky=tk.N)
 
-# Game field binds UI and logic together
-field = game_logic.Field(FIELD_WIDTH, FIELD_HEIGHT)
-
-repaint_event = custom_threads.NeedRepaintEvent()
-
-# Create game instance
-logic = game_logic.Game(field)
-
-key_handler = keyboard_handler.KeyboardHandler(field)
+key_handler = keyboard_handler.KeyboardHandler()
 
 # Bind keyboard listener
 root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
@@ -55,18 +47,24 @@ for _x in range(FIELD_WIDTH):
         all_points.append((_x, _y))
 
 
-def repaint(points=all_points):
+# TODO: move to repaint thread
+def repaint(points=None):
+    if points is None:
+        points = all_points
     for x, y in points:
-        cell = field.get_cell_copy(x, y)
-        if (cell.state == game_logic.CellState.EMPTY and cell.image_id is not None) or cell.need_img_replace:
-            ui_field.delete(cell.image_id)
-            field.set_cell_image_id(x, y, None)
-            field.set_cell_need_img_replace(x, y, False)
-        if cell.state in (game_logic.CellState.FILLED, game_logic.CellState.FALLING) and cell.image_id is None:
-            _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
-            _y = y * CELL_SIZE + 2
-            img = filled_cell_image if cell.state == game_logic.CellState.FILLED else falling_cell_image
-            field.set_cell_image_id(x, y, ui_field.create_image(_x, _y, anchor=tk.NW, image=img))
+        cell_params = field.get_cell_params(x, y)
+        if cell_params is not None:
+            state, image_id, need_repaint = cell_params
+            if need_repaint:
+                if state == game_logic.CellState.EMPTY and image_id is not None:
+                    ui_field.delete(image_id)
+                    field.set_cell_image_id(x, y, None)
+                elif state in (game_logic.CellState.FILLED, game_logic.CellState.FALLING) and image_id is None:
+                    _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
+                    _y = y * CELL_SIZE + 2
+                    img = filled_cell_image if state == game_logic.CellState.FILLED else falling_cell_image
+                    field.set_cell_image_id(x, y, ui_field.create_image(_x, _y, anchor=tk.NW, image=img))
+                field.set_cell_need_img_replace(x, y, False)
     ui_field.update()
 
 
@@ -77,10 +75,21 @@ def on_close():
 
 root.protocol("WM_DELETE_WINDOW", on_close)
 
+repaint_event = custom_threads.NeedRepaintEvent()
 repaint_thread = custom_threads.RepaintThread(repaint_event, repaint)
-repaint_thread.start()
 
-field.spawn_figure()
+# Game field binds UI and logic together
+field = game_logic.Field(FIELD_WIDTH, FIELD_HEIGHT, repaint_event)
+
+# Bind keyboard handler to Field methods
+key_handler.move_left_func = field.move_left
+key_handler.move_right_func = field.move_right
+# TODO: bind all
+
+# Create game instance
+logic = game_logic.Game(field)
+
 
 # Start application
+repaint_thread.start()
 root.mainloop()

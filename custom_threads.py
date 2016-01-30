@@ -5,7 +5,7 @@ import threading
 class NeedRepaintEvent(threading.Event):
     def __init__(self):
         super().__init__()
-        self.points = []
+        self.points = None
 
 
 class TickThread(threading.Thread):
@@ -39,4 +39,5 @@ class RepaintThread(threading.Thread):
         while True:
             if self._repaint_event.is_set():
                 self._target(self._repaint_event.points)
+                self._repaint_event.points = None
                 self._repaint_event.clear()

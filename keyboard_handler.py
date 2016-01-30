@@ -1,8 +1,3 @@
-import threading
-import time
-
-import game_logic
-
 # Default key binds
 MOVE_LEFT = 37  # Left arrow
 MOVE_RIGHT = 39  # Right arrow
@@ -16,53 +11,38 @@ class KeyboardHandler:
     """
     Possibly this will work fine only on Windows
     """
-    def __init__(self, field: game_logic.Field, interval=0.1):
-        self._field = field
-        self._last_time = time.time()
-        self.interval = interval
-        self._pressed_keys = dict()
-        self._key_processor = threading.Thread(target=self._process_key)
-        self._key_processor.start()
-        self.processed_once = False
+    def __init__(self):
+        self.move_left_func = None
+        self.move_right_func = None
+        self.force_down_func = None
+        self.rotate_func = None
+        self.pause_func = None
 
     def on_key_press(self, event):
-        print('On key press')
-        if event.keycode not in self._pressed_keys:
-            self._pressed_keys[event.keycode] = 0
+        self._process_key(event.keycode)
 
     def on_key_release(self, event):
-        print("On key release")
-        if event.keycode in self._pressed_keys:
-            self._pressed_keys.pop(event.keycode)
-
-    def _process_key(self):
-        while True:
-            for code in self._pressed_keys:
-                # Make a decision what should we do with this key (Where is my switch keyword??)
-                if code == MOVE_LEFT:
-                    self._process_move_left()
-                elif code == MOVE_RIGHT:
-                    self._process_move_right()
-                elif code == ROTATE:
-                    self._process_rotate()
-                elif code == FORCE_DOWN:
-                    self._process_force_down()
-                elif code == PAUSE:
-                    self._process_pause()
-                self.processed_once = True
-            time.sleep(self.interval)
-
-    def _process_move_left(self):
-        self._field.move_left()
-
-    def _process_move_right(self):
-        self._field.move_right()
-
-    def _process_rotate(self):
         pass
 
-    def _process_force_down(self):
-        pass
+    def _process_key(self, code):
+        # Make a decision what should we do with this key (Where is my switch keyword??)
 
-    def _process_pause(self):
-        pass
+        if code == MOVE_LEFT and callable(self.move_left_func):
+            # noinspection PyCallingNonCallable
+            self.move_left_func()
+
+        elif code == MOVE_RIGHT and callable(self.move_right_func):
+            # noinspection PyCallingNonCallable
+            self.move_right_func()
+
+        elif code == ROTATE and callable(self.rotate_func):
+            # noinspection PyCallingNonCallable
+            self.rotate_func()
+
+        elif code == FORCE_DOWN and callable(self.force_down_func):
+            # noinspection PyCallingNonCallable
+            self.force_down_func()
+
+        elif code == PAUSE and callable(self.pause_func):
+            # noinspection PyCallingNonCallable
+            self.pause_func()

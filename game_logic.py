@@ -1,6 +1,9 @@
 import copy
 import enum
+import random
 import threading
+
+import custom_threads
 
 
 class Rotation(enum.Enum):
@@ -29,10 +32,13 @@ class Figure:
     Saves a set of figure points and rules of rotation
     """
     def __init__(self):
-        self._matrix = {}  # set() of points for each Rotation
-        self._rotation = Rotation.NORTH
-        self.current_points = []
+        self.matrix = {}  # set() of points for each Rotation
+        self.rotation = Rotation.NORTH
+        self.current_points = set()
         self.position = None
+
+    def current_matrix(self):
+        return self.matrix.get(self.rotation, set())
 
 
 class ZFigure(Figure):
@@ -40,8 +46,9 @@ class ZFigure(Figure):
     Represents "Z" figure
     """
     def __init__(self):
+        print("Creating Z-figure...")
         super().__init__()
-        self._matrix = {Rotation.NORTH: {(0, 0), (1, 0), (1, 1), (2, 1)}}
+        self.matrix = {Rotation.NORTH: {(0, 0), (1, 0), (1, 1), (2, 1)}}
 
 
 class Cell:
@@ -58,21 +65,21 @@ class Field:
     """
     Contains information about game field
     """
-    def __init__(self, width, height):
+    def __init__(self, width, height, repaint_event: custom_threads.NeedRepaintEvent):
         self.width = width
         self.height = height
         # An internal structure to store field state (two-dimensional list)
         self._field = [[Cell() for _ in range(self.height)] for _ in range(self.width)]
         self._lock = threading.Lock()
+        self._repaint_event = repaint_event
+        # Current falling figure
+        self._figure = None
+        self.spawn_figure()
 
-    def get_cell_copy(self, x, y):
-        """
-        :param x: horizontal coordinate
-        :param y: vertical coordinate
-        :return: Cell copy or None
-        """
+    def get_cell_params(self, x, y):
         if 0 <= x < self.width and 0 <= y < self.height:
-            return copy.deepcopy(self._field[x][y])
+            cell = self._field[x][y]
+            return cell.state, cell.image_id, cell.need_img_replace
         else:
             return None
 
@@ -90,18 +97,65 @@ class Field:
         if 0 <= x < self.width and 0 <= y < self.height:
             with self._lock:
                 self._field[x][y].need_img_replace = need_img_replace
+        self._print_field()
 
     def fix_figure(self):
         pass
 
     def spawn_figure(self):
-        pass
+        if self._figure is None:
+            # figure_cls = random.choice((ZFigure, ))
+            # self._figure = figure_cls()
+            self._figure = ZFigure()  # TODO: make it random
+            self.place()
+            self._repaint_event.set()
+
+    def place(self, point=(4, 0)):
+        with self._lock:
+            target_points = set()
+            for _x, _y in self._figure.current_matrix():
+                x = _x + point[0]
+                y = _y + point[1]
+                if not (0 <= x < self.width and 0 <= y < self.height and self._field[x][y].state != CellState.FILLED):
+                    print("Cannot place figure to {}".format(point))
+                    return False
+                target_points.add((x, y))
+            for x, y in self._figure.current_points:
+                self._field[x][y].state = CellState.EMPTY
+            # self._print_field()
+            for x, y in target_points:
+                self._field[x][y].state = CellState.FALLING
+            # self._print_field()
+            self._figure.current_points = self._figure.current_points.union(target_points)
+            for x, y in self._figure.current_points:
+                self._field[x][y].need_img_replace = True
+            self._figure.position = point
+            self._repaint_event.points = copy.deepcopy(self._figure.current_points)
+            self._repaint_event.set()
+            print("Figure placed to {}".format(point))
+            return True
+
+    def _print_field(self):
+        # TODO: remove
+        for y in range(20):
+            print("")
+            for x in range(10):
+                print(self._field[x][y].state._value_, end="")
+        print("")
 
     def move_left(self):
-        pass
+        print("Trying move left")
+        if self._figure is None or self._figure.position is None:
+            print("There is no figure to move")
+            return
+        self.place((self._figure.position[0] - 1, self._figure.position[1]))
 
     def move_right(self):
-        pass
+        print("Trying move right")
+        if self._figure is None or self._figure.position is None:
+            print("There is no figure to move")
+            return
+        self.place((self._figure.position[0] + 1, self._figure.position[1]))
 
     def move_down(self):
         pass
