@@ -84,6 +84,7 @@ field = game_logic.Field(FIELD_WIDTH, FIELD_HEIGHT, repaint_event)
 # Bind keyboard handler to Field methods
 key_handler.move_left_func = field.move_left
 key_handler.move_right_func = field.move_right
+key_handler.force_down_func = field.move_down  # TODO: replace to force down when ready
 # TODO: bind all
 
 # Create game instance

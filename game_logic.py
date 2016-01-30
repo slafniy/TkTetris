@@ -97,7 +97,7 @@ class Field:
         if 0 <= x < self.width and 0 <= y < self.height:
             with self._lock:
                 self._field[x][y].need_img_replace = need_img_replace
-        self._print_field()
+        # self._print_field()
 
     def fix_figure(self):
         pass
@@ -143,19 +143,21 @@ class Field:
                 print(self._field[x][y].state._value_, end="")
         print("")
 
-    def move_left(self):
-        print("Trying move left")
+    def _move(self, x_diff=0, y_diff=0):
+        print("Trying to move...")
         if self._figure is None or self._figure.position is None:
             print("There is no figure to move")
-            return
-        self.place((self._figure.position[0] - 1, self._figure.position[1]))
+            return False
+        return self.place((self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
+
+    def move_left(self):
+        return self._move(x_diff=-1)
 
     def move_right(self):
-        print("Trying move right")
-        if self._figure is None or self._figure.position is None:
-            print("There is no figure to move")
-            return
-        self.place((self._figure.position[0] + 1, self._figure.position[1]))
+        return self._move(x_diff=1)
 
     def move_down(self):
+        return self._move(y_diff=1)
+
+    def force_down(self):
         pass
