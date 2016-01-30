@@ -41,7 +41,6 @@ def key_pressed(event):
     """
     Keyboard handler
     """
-    print("Key pressed: {} {}".format(event.keycode, event.keysym))
     # Make a decision what should we do with this key (Where is my switch keyword??)
     if event.keycode == MOVE_LEFT:
         process_move_left()
@@ -56,37 +55,23 @@ def key_pressed(event):
 
 
 def process_move_left():
-    print("Process move left...")
+    logic.move_left()
 
 
 def process_move_right():
-    print("Process move right...")
+    logic.move_right()
 
 
 def process_rotate():
-    print("Process rotate...")
+    pass
 
 
 def process_force_down():
-    print("Process force down...")
-    logic._figure.place(3, 5)
+    pass
 
 
 def process_pause():
-    print("Process pause...")
-
-
-def test_draw():
-    import time
-    import random
-
-    x_list = list(range(FIELD_WIDTH))
-    y_list = list(range(FIELD_HEIGHT))
-    for i in range(10):
-        x = random.choice(x_list)
-        y = random.choice(y_list)
-        state = random.choice([e for e in field_impl.CellState])
-        field.get_cell(x, y).state = state
+    pass
 
 
 # Bind keyboard listener
@@ -120,10 +105,13 @@ def repaint_all():
     ui_field.update()
 
 
-def tick():
-    # test_draw()
-    logic.next_step()
-    repaint_all()
+def do_repaint(fps=60):
+    target_step_time = 1 / fps
+    while True:
+        start_time = time.time()
+        repaint_all()
+        sleep_time = target_step_time - (time.time() - start_time)
+        time.sleep(sleep_time if sleep_time >= 0 else 0)
 
 
 def on_close():
@@ -142,8 +130,11 @@ logic = game_logic.Game(field)
 logic.spawn_z()  # TODO: remove
 
 # Start tick tread
-tick_thread = game_logic.TickThread(tick, tick_interval_sec=0.1)
+tick_thread = game_logic.TickThread(logic.next_step, tick_interval_sec=0.5)
 tick_thread.start()
+
+repaint_thread = threading.Thread(target=do_repaint, args=(60,))
+repaint_thread.start()
 
 # Start application
 root.mainloop()

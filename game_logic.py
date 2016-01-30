@@ -13,6 +13,7 @@ class Game:
     def __init__(self, field: field_impl.Field):
         self._field = field
         self._figure = None
+        self.fix_on_the_next_step = False
 
     def spawn_z(self):
         self._figure = ZFigure(self._field)
@@ -24,13 +25,16 @@ class Game:
 
     def next_step(self):
         if self._figure is not None:
+            if self.fix_on_the_next_step:
+                self.fix_figure()
+                self.spawn_z()
+                self.fix_on_the_next_step = False
+                return
             if self._figure.place(self._figure.position[0], self._figure.position[1]):
                 self._figure.position[1] += 1
             else:
-                print('Cannot step, fixing figure and spawning the next')
-                self.fix_figure()
-                self._figure = None
-                self.spawn_z()
+                print('Cannot step, fixing figure and spawning the next on the next step')
+                self.fix_on_the_next_step = True
 
     def fix_figure(self):
         """
@@ -42,6 +46,14 @@ class Game:
             cell.state = field_impl.CellState.FILLED
             cell.need_img_replace = True
         self._figure = None
+
+    def move_left(self):
+        if self._figure is not None:
+            self._figure.place(self._figure.position[0] - 1, self._figure.position[1])
+
+    def move_right(self):
+        if self._figure is not None:
+            self._figure.place(self._figure.position[0] + 1, self._figure.position[1])
 
 
 class Rotation(enum.Enum):
@@ -73,7 +85,7 @@ class Figure:
         :param x:
         :return: returns True if figure placed and False if it's impossible
         """
-        print("Trying to place figure to ({}, {})".format(x, y))
+        # print("Trying to place figure to ({}, {})".format(x, y))
         points = []
         for _x, _y in self._matrix[self._rotation]:
             cell = self._field.get_cell(_x + x, _y + y)
@@ -88,7 +100,7 @@ class Figure:
         for _x, _y in self.current_points:
             if (_x, _y) not in points:
                 self._field.get_cell(_x, _y).state = field_impl.CellState.EMPTY
-        print('Figure placed to {}, {}'.format(x, y))
+        # print('Figure placed to {}, {}'.format(x, y))
         self.current_points = points
         self.position = [x, y]
         return True
@@ -116,9 +128,9 @@ class TickThread(threading.Thread):
     Special thread that endlessly run tick_function and can be stopped correctly
     """
     def __init__(self, tick_function, tick_interval_sec=1):
-        self._control_tick_interval = 0.05
-        assert tick_interval_sec >= self._control_tick_interval, \
-            "Tick interval shouldn't be less than {} sec".format(self._control_tick_interval)
+        # self._control_tick_interval = 0.01
+        # assert tick_interval_sec >= self._control_tick_interval, \
+        #     "Tick interval shouldn't be less than {} sec".format(self._control_tick_interval)
         self.tick_interval = tick_interval_sec
         super().__init__(target=tick_function)
         self._stop_event = threading.Event()
@@ -129,9 +141,9 @@ class TickThread(threading.Thread):
 
     def run(self):
         while not self._stop_event.is_set():
-            # print("Stop event set:", self._stop_event.is_set())
-            if self._time_counter >= self.tick_interval:
-                self._target()
-                self._time_counter = 0
-            self._time_counter += self._control_tick_interval
-            time.sleep(self._control_tick_interval)
+            start_time = time.time()
+            self._target()
+            self._time_counter = 0
+            sleep_time = self.tick_interval - time.time() + start_time
+            print(sleep_time)
+            time.sleep(sleep_time)

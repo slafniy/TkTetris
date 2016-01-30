@@ -40,5 +40,5 @@ class Field:
         if 0 <= x < self.width and 0 <= y < self.height:
             return self._field[x][y]
         else:
-            print("Cell ({}, {}) doesn't exist".format(x, y))
+            # print("Cell ({}, {}) doesn't exist".format(x, y))
             return None
