@@ -56,17 +56,17 @@ class Cell:
     Describes cell - internal state and optional related image id
     """
     def __init__(self):
-        self._state = CellState.EMPTY
+        self.state = CellState.EMPTY
         self.image_id = None
         self.repaint_me = False
 
     def set_state(self, state: CellState):
-        if state != self._state:
-            self._state = state
+        if state != self.state:
+            self.state = state
             self.repaint_me = True
 
     def get_state(self):
-        return self._state
+        return self.state
 
 
 class Field:
@@ -87,20 +87,20 @@ class Field:
 
     def get_cell_params(self, x, y):
         if 0 <= x < self.width and 0 <= y < self.height:
-            cell = self._field[x][y]
-            return cell.get_state(), cell.image_id, cell.repaint_me
+            with self._lock:
+                cell = self._field[x][y]
+                return cell.get_state(), cell.image_id, cell.repaint_me
         else:
             raise AttributeError("There is no cell {}, {}".format(x, y))
 
-    def set_cell_repaint_me(self, x, y, value: bool):
+    def set_cell_params(self, x, y, state, image_id, repaint_me):
         if 0 <= x < self.width and 0 <= y < self.height:
             with self._lock:
-                self._field[x][y].repaint_me = value
-
-    def set_cell_image_id(self, x, y, image_id):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            with self._lock:
+                self._field[x][y].state = state
                 self._field[x][y].image_id = image_id
+                self._field[x][y].repaint_me = repaint_me
+        else:
+            raise AttributeError("There is no cell {}, {}".format(x, y))
 
     def fix_figure(self):
         with self._lock:
@@ -154,7 +154,7 @@ class Field:
         for y in range(20):
             print("")
             for x in range(10):
-                print(self._field[x][y]._state._value_, end="")
+                print(self._field[x][y].state._value_, end="")
         print("")
 
     def _move(self, x_diff=0, y_diff=0):

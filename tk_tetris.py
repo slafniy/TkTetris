@@ -50,13 +50,13 @@ def repaint():
                 if image_id is not None:
                     ui_field.delete(image_id)
                 if state == game_logic.CellState.EMPTY:
-                    field.set_cell_image_id(x, y, None)
-                elif state in (game_logic.CellState.FALLING, game_logic.CellState.FILLED):
+                    new_image_id = None
+                else:
                     _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
                     _y = y * CELL_SIZE + 2  # TODO: get rid of this magic
                     img = filled_cell_image if state == game_logic.CellState.FILLED else falling_cell_image
-                    field.set_cell_image_id(x, y, ui_field.create_image(_x, _y, anchor=tk.NW, image=img))
-                field.set_cell_repaint_me(x, y, False)
+                    new_image_id = ui_field.create_image(_x, _y, anchor=tk.NW, image=img)
+                field.set_cell_params(x, y, state, new_image_id, False)
                 ui_field.update()
 
 
