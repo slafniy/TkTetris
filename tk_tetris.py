@@ -2,7 +2,6 @@ import os
 import threading
 import tkinter as tk
 
-import custom_threads
 import game
 import keyboard_handler
 

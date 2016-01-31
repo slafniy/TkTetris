@@ -44,7 +44,7 @@ class Game:
         """
         self.width = width
         self.height = height
-        self.tick_interval = 0.3
+        self.tick_interval = 0.2
 
         # Functions to draw and remove cells
         # TODO: write interface for this
@@ -92,7 +92,7 @@ class Game:
 
     def spawn_figure(self):
         if self._figure is None:
-            figure_cls = random.choice((figures.ZFigure, figures.TFigure))
+            figure_cls = random.choice(figures.all_figures)
             self._figure = figure_cls()
             can_place = self.place()
             if can_place is False:
