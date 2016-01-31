@@ -56,16 +56,24 @@ class Cell:
     Describes cell - internal state and optional related image id
     """
     def __init__(self):
-        self.state = CellState.EMPTY
+        self._state = CellState.EMPTY
         self.image_id = None
-        self.need_img_replace = False
+        self.repaint_me = False
+
+    def set_state(self, state: CellState):
+        if state != self._state:
+            self._state = state
+            self.repaint_me = True
+
+    def get_state(self):
+        return self._state
 
 
 class Field:
     """
     Contains information about game field
     """
-    def __init__(self, width, height, repaint_event: custom_threads.NeedRepaintEvent):
+    def __init__(self, width, height, repaint_event: threading.Event):
         self.width = width
         self.height = height
         # An internal structure to store field state (two-dimensional list)
@@ -80,31 +88,24 @@ class Field:
     def get_cell_params(self, x, y):
         if 0 <= x < self.width and 0 <= y < self.height:
             cell = self._field[x][y]
-            return cell.state, cell.image_id, cell.need_img_replace
+            return cell.get_state(), cell.image_id, cell.repaint_me
         else:
-            return None
+            raise AttributeError("There is no cell {}, {}".format(x, y))
 
-    def set_cell_state(self, x, y, state):
+    def set_cell_repaint_me(self, x, y, value: bool):
         if 0 <= x < self.width and 0 <= y < self.height:
             with self._lock:
-                self._field[x][y].state = state
+                self._field[x][y].repaint_me = value
 
     def set_cell_image_id(self, x, y, image_id):
         if 0 <= x < self.width and 0 <= y < self.height:
             with self._lock:
                 self._field[x][y].image_id = image_id
 
-    def set_cell_need_img_replace(self, x, y, need_img_replace: bool):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            with self._lock:
-                self._field[x][y].need_img_replace = need_img_replace
-        # self._print_field()
-
     def fix_figure(self):
         with self._lock:
             for x, y in self._figure.current_points:
-                self._field[x][y].state = CellState.FILLED
-                self._field[x][y].need_img_replace = True
+                self._field[x][y].set_state(CellState.FILLED)
             self._repaint_event.points = self._figure.current_points
             self._repaint_event.set()
             self._figure = None
@@ -127,21 +128,23 @@ class Field:
             for _x, _y in self._figure.current_matrix():
                 x = _x + point[0]
                 y = _y + point[1]
-                if not (0 <= x < self.width and 0 <= y < self.height and self._field[x][y].state != CellState.FILLED):
+                if not (0 <= x < self.width and 0 <= y < self.height and
+                        self._field[x][y].get_state() != CellState.FILLED):
                     print("Cannot place figure to {}".format(point))
                     return False
                 target_points.add((x, y))
-            for x, y in self._figure.current_points:
-                self._field[x][y].state = CellState.EMPTY
-            # self._print_field()
-            for x, y in target_points:
-                self._field[x][y].state = CellState.FALLING
-            # self._print_field()
-            self._figure.current_points = self._figure.current_points.union(target_points)
-            for x, y in self._figure.current_points:
-                self._field[x][y].need_img_replace = True
+            initial_points = copy.deepcopy(self._figure.current_points)
+            draw_points = target_points.difference(initial_points)
+            repaint_points = target_points.union(initial_points)
+            clear_points = initial_points.difference(target_points)
+            self._figure.current_points = target_points
+
+            for x, y in clear_points:
+                self._field[x][y].set_state(CellState.EMPTY)
+            for x, y in draw_points:
+                self._field[x][y].set_state(CellState.FALLING)
+
             self._figure.position = point
-            self._repaint_event.points = copy.deepcopy(self._figure.current_points)
             self._repaint_event.set()
             print("Figure placed to {}".format(point))
             return True
@@ -151,7 +154,7 @@ class Field:
         for y in range(20):
             print("")
             for x in range(10):
-                print(self._field[x][y].state._value_, end="")
+                print(self._field[x][y]._state._value_, end="")
         print("")
 
     def _move(self, x_diff=0, y_diff=0):

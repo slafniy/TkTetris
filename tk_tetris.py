@@ -1,4 +1,5 @@
 import os
+import threading
 import tkinter as tk
 
 import custom_threads
@@ -41,31 +42,22 @@ root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
 root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
 
-all_points = []
-for _x in range(FIELD_WIDTH):
-    for _y in range(FIELD_HEIGHT):
-        all_points.append((_x, _y))
-
-
-# TODO: move to repaint thread
-def repaint(points=None):
-    if points is None:
-        points = all_points
-    for x, y in points:
-        cell_params = field.get_cell_params(x, y)
-        if cell_params is not None:
-            state, image_id, need_repaint = cell_params
-            if need_repaint:
-                if state == game_logic.CellState.EMPTY and image_id is not None:
+def repaint():
+    for x in range(FIELD_WIDTH):
+        for y in range(FIELD_HEIGHT):
+            state, image_id, repaint_me = field.get_cell_params(x, y)
+            if repaint_me:
+                if image_id is not None:
                     ui_field.delete(image_id)
+                if state == game_logic.CellState.EMPTY:
                     field.set_cell_image_id(x, y, None)
-                elif state in (game_logic.CellState.FILLED, game_logic.CellState.FALLING) and image_id is None:
-                    _x = x * CELL_SIZE + 2  # TODO: get rid of this magic number!
-                    _y = y * CELL_SIZE + 2
+                elif state in (game_logic.CellState.FALLING, game_logic.CellState.FILLED):
+                    _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
+                    _y = y * CELL_SIZE + 2  # TODO: get rid of this magic
                     img = filled_cell_image if state == game_logic.CellState.FILLED else falling_cell_image
                     field.set_cell_image_id(x, y, ui_field.create_image(_x, _y, anchor=tk.NW, image=img))
-                field.set_cell_need_img_replace(x, y, False)
-    ui_field.update()
+                field.set_cell_repaint_me(x, y, False)
+                ui_field.update()
 
 
 def on_close():
@@ -75,7 +67,7 @@ def on_close():
 
 root.protocol("WM_DELETE_WINDOW", on_close)
 
-repaint_event = custom_threads.NeedRepaintEvent()
+repaint_event = threading.Event()
 repaint_thread = custom_threads.RepaintThread(repaint_event, repaint)
 
 # Game field binds UI and logic together
