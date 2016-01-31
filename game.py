@@ -1,8 +1,6 @@
 import copy
 import enum
-import random
 import threading
-import tkinter as tk
 
 import custom_threads
 
@@ -18,14 +16,6 @@ class CellState(enum.Enum):
     EMPTY = 0
     FILLED = 1
     FALLING = 2
-
-
-class Game:
-    """
-    Game logic
-    """
-    def __init__(self, field):
-        self._field = field
 
 
 class Figure:
@@ -54,62 +44,70 @@ class ZFigure(Figure):
 
 class Cell:
     """
-    Describes cell - internal state and optional related image id
+    Describes cell - internal state and related image id
     """
     def __init__(self):
         self.state = CellState.EMPTY
         self.image_id = None
-        self.repaint_me = False
-
-    def set_state(self, state: CellState):
-        if state != self.state:
-            self.state = state
-            self.repaint_me = True
-
-    def get_state(self):
-        return self.state
 
 
-class Field:
+class Game:
     """
     Contains information about game field
     """
-    def __init__(self, width, height, lock, repaint_event: threading.Event, game_over_event: threading.Event):
+    def __init__(self, *, width, height, paint_filled, paint_falling, delete_image, refresh_ui,
+                 game_over_event: threading.Event):
+        """
+        Field constructor. Initializes field matrix, should control the game.
+        :param width: How many cells one horizontal row contains
+        :param height: How many cells one vertical column contains
+        :param paint_filled: Function that paints filled cell on UI
+        :param paint_falling: Function that paints falling cell on UI
+        :param delete_image: Function that deletes image via ID
+        :param game_over_event: Event that indicates that game is over
+        """
         self.width = width
         self.height = height
+
+        # Functions to draw and remove cells
+        # TODO: write interface for this
+        assert callable(paint_filled)
+        assert callable(paint_falling)
+        assert callable(delete_image)
+        self._paint_ui_filled = paint_filled
+        self._paint_ui_falling = paint_falling
+        self._delete_ui_image = delete_image
+        self._refresh_ui = refresh_ui
+
         # An internal structure to store field state (two-dimensional list)
         self._field = [[Cell() for _ in range(self.height)] for _ in range(self.width)]
-        self._lock = lock
-        self._repaint_event = repaint_event
         self.game_over_event = game_over_event
         # Current falling figure
         self._figure = None
         self.paused = False
 
-    def get_cell_params(self, x, y):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            with self._lock:
-                cell = self._field[x][y]
-                return cell.get_state(), cell.image_id, cell.repaint_me
-        else:
-            raise AttributeError("There is no cell {}, {}".format(x, y))
+        self.tick_thread = custom_threads.TickThread(self.tick, 0.1, game_over_event)
+        self.tick_thread.start()
 
-    def set_cell_params(self, x, y, state, image_id, repaint_me):
+    def _set_cell_state(self, x, y, state: CellState):
         if 0 <= x < self.width and 0 <= y < self.height:
-            with self._lock:
-                self._field[x][y].state = state
-                self._field[x][y].image_id = image_id
-                self._field[x][y].repaint_me = repaint_me
-        else:
-            raise AttributeError("There is no cell {}, {}".format(x, y))
+            cell = self._field[x][y]
+            cell.state = state
+            # Remove existing image
+            if cell.image_id is not None:
+                self._delete_ui_image(cell.image_id)
+            # Paint new image if needed
+            if state == CellState.FILLED:
+                cell.image_id = self._paint_ui_filled(x, y)
+            elif state == CellState.FALLING:
+                cell.image_id = self._paint_ui_falling(x, y)
 
     def fix_figure(self):
-        with self._lock:
-            for x, y in self._figure.current_points:
-                self._field[x][y].set_state(CellState.FILLED)
-            self._repaint_event.points = self._figure.current_points
-            self._repaint_event.set()
-            self._figure = None
+        print("Fixing figure")
+        for x, y in self._figure.current_points:
+            self._set_cell_state(x, y, CellState.FILLED)
+        self._refresh_ui()
+        self._figure = None
 
     def spawn_figure(self):
         if self._figure is None:
@@ -120,43 +118,32 @@ class Field:
             if can_place is False:
                 self.game_over_event.set()
                 print('Cannot place new figure - game over')
-                self._print_field()
-            self._repaint_event.set()
             return can_place
 
     def place(self, point=(4, 0)):
-        with self._lock:
-            target_points = set()
-            for _x, _y in self._figure.current_matrix():
-                x = _x + point[0]
-                y = _y + point[1]
-                if not (0 <= x < self.width and 0 <= y < self.height and
-                        self._field[x][y].get_state() != CellState.FILLED):
-                    print("Cannot place figure to {}".format(point))
-                    return False
-                target_points.add((x, y))
-            initial_points = copy.deepcopy(self._figure.current_points)
-            draw_points = target_points.difference(initial_points)
-            clear_points = initial_points.difference(target_points)
-            self._figure.current_points = target_points
+        target_points = set()
+        for _x, _y in self._figure.current_matrix():
+            x = _x + point[0]
+            y = _y + point[1]
+            if not (0 <= x < self.width and 0 <= y < self.height and
+                    self._field[x][y].state != CellState.FILLED):
+                print("Cannot place figure to {}".format(point))
+                return False
+            target_points.add((x, y))
+        initial_points = copy.deepcopy(self._figure.current_points)
+        draw_points = target_points.difference(initial_points)
+        clear_points = initial_points.difference(target_points)
+        self._figure.current_points = target_points
 
-            for x, y in clear_points:
-                self._field[x][y].set_state(CellState.EMPTY)
-            for x, y in draw_points:
-                self._field[x][y].set_state(CellState.FALLING)
+        for x, y in clear_points:
+            self._set_cell_state(x, y, CellState.EMPTY)
+        for x, y in draw_points:
+            self._set_cell_state(x, y, CellState.FALLING)
 
-            self._figure.position = point
-            self._repaint_event.set()
-            print("Figure placed to {}".format(point))
-            return True
-
-    def _print_field(self):
-        # TODO: remove
-        for y in range(20):
-            print("")
-            for x in range(10):
-                print(self._field[x][y].state._value_, end="")
-        print("")
+        self._figure.position = point
+        self._refresh_ui()
+        print("Figure placed to {}".format(point))
+        return True
 
     def _move(self, x_diff=0, y_diff=0):
         print("Trying to move...")
@@ -184,6 +171,7 @@ class Field:
         if self.game_over_event.is_set():
             print("Skip tick because of game over")
             return
+
         if self._figure is None:
             print("Trying to spawn new figure")
             self.spawn_figure()
