@@ -18,6 +18,7 @@ class TickThread(threading.Thread):
         self._stop_event.set()
 
     def run(self):
+        time.sleep(1)
         while not self._stop_event.is_set() and not self._game_over_event.is_set():
             start_time = time.time()
             self._target()

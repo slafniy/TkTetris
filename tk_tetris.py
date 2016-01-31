@@ -65,17 +65,18 @@ root.protocol("WM_DELETE_WINDOW", on_close)
 game_over_event = threading.Event()
 
 # Game field binds UI and logic together
-field = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT,
-                  paint_filled=paint_filled,
-                  paint_falling=paint_falling,
-                  delete_image=ui_field.delete,
-                  refresh_ui=ui_field.update,
-                  game_over_event=game_over_event)
+g = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT,
+              paint_filled=paint_filled,
+              paint_falling=paint_falling,
+              delete_image=ui_field.delete,
+              refresh_ui=ui_field.update,
+              game_over_event=game_over_event)
 
 # Bind keyboard handler to Field methods
-key_handler.move_left_func = field.move_left
-key_handler.move_right_func = field.move_right
-key_handler.force_down_func = field.move_down  # TODO: replace to force down when ready
+key_handler.move_left_func = g.move_left
+key_handler.move_right_func = g.move_right
+key_handler.force_down_func = g.move_down  # TODO: replace to force down when ready
+key_handler.rotate_func = g.rotate
 # TODO: bind all
 
 # Start application

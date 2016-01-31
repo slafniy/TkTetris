@@ -1,45 +1,16 @@
 import copy
 import enum
+import random
 import threading
 
 import custom_threads
+import figures
 
 
-class Rotation(enum.Enum):
-    NORTH = 0
-    EAST = 1
-    SOUTH = 2
-    WEST = 3
-
-
-class CellState(enum.Enum):
+class CellState(enum.IntEnum):
     EMPTY = 0
     FILLED = 1
     FALLING = 2
-
-
-class Figure:
-    """
-    Saves a set of figure points and rules of rotation
-    """
-    def __init__(self):
-        self.matrix = {}  # set() of points for each Rotation
-        self.rotation = Rotation.NORTH
-        self.current_points = set()
-        self.position = None
-
-    def current_matrix(self):
-        return self.matrix.get(self.rotation, set())
-
-
-class ZFigure(Figure):
-    """
-    Represents "Z" figure
-    """
-    def __init__(self):
-        print("Creating Z-figure...")
-        super().__init__()
-        self.matrix = {Rotation.NORTH: {(0, 0), (1, 0), (1, 1), (2, 1)}}
 
 
 class Cell:
@@ -73,6 +44,7 @@ class Game:
         """
         self.width = width
         self.height = height
+        self.tick_interval = 0.3
 
         # Functions to draw and remove cells
         # TODO: write interface for this
@@ -91,7 +63,7 @@ class Game:
         self._figure = None
         self.paused = False
 
-        self.tick_thread = custom_threads.TickThread(self.tick, 0.5, game_over_event)
+        self.tick_thread = custom_threads.TickThread(self.tick, self.tick_interval, game_over_event)
         self.tick_thread.start()
 
         # To not allow simultaneous call of place()
@@ -120,9 +92,8 @@ class Game:
 
     def spawn_figure(self):
         if self._figure is None:
-            # figure_cls = random.choice((ZFigure, ))
-            # self._figure = figure_cls()
-            self._figure = ZFigure()  # TODO: make it random
+            figure_cls = random.choice((figures.ZFigure, figures.TFigure))
+            self._figure = figure_cls()
             can_place = self.place()
             if can_place is False:
                 self.game_over_event.set()
@@ -182,6 +153,16 @@ class Game:
 
     def force_down(self):
         pass
+
+    def rotate(self):
+        if self._figure is not None:
+            current_rotation = self._figure.rotation
+            self._figure.set_next_rotation()
+            if not self.place(self._figure.position):
+                if not self.place((self._figure.position[0] - 1, self._figure.position[1])):
+                    if not self.place((self._figure.position[0], self._figure.position[1] - 1)):
+                        if not self.place((self._figure.position[0] - 1, self._figure.position[1] - 1)):
+                            self._figure.rotation = current_rotation
 
     def tick(self):
         if self.paused:
