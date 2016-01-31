@@ -51,6 +51,11 @@ class Cell:
         self.image_id = None
 
 
+class BusyWarning(Exception):
+    def __init__(self):
+        super().__init__()
+
+
 class Game:
     """
     Contains information about game field
@@ -86,8 +91,12 @@ class Game:
         self._figure = None
         self.paused = False
 
-        self.tick_thread = custom_threads.TickThread(self.tick, 0.1, game_over_event)
+        self.tick_thread = custom_threads.TickThread(self.tick, 0.5, game_over_event)
         self.tick_thread.start()
+
+        # To not allow simultaneous call of place()
+        # TODO: this doesn't look smart, remade
+        self._is_busy = True
 
     def _set_cell_state(self, x, y, state: CellState):
         if 0 <= x < self.width and 0 <= y < self.height:
@@ -121,36 +130,46 @@ class Game:
             return can_place
 
     def place(self, point=(4, 0)):
-        target_points = set()
-        for _x, _y in self._figure.current_matrix():
-            x = _x + point[0]
-            y = _y + point[1]
-            if not (0 <= x < self.width and 0 <= y < self.height and
-                    self._field[x][y].state != CellState.FILLED):
-                print("Cannot place figure to {}".format(point))
-                return False
-            target_points.add((x, y))
-        initial_points = copy.deepcopy(self._figure.current_points)
-        draw_points = target_points.difference(initial_points)
-        clear_points = initial_points.difference(target_points)
-        self._figure.current_points = target_points
+        self._is_busy = True
+        try:
+            target_points = set()
+            for _x, _y in self._figure.current_matrix():
+                x = _x + point[0]
+                y = _y + point[1]
+                if not (0 <= x < self.width and 0 <= y < self.height and
+                        self._field[x][y].state != CellState.FILLED):
+                    print("Cannot place figure to {}".format(point))
+                    return False
+                target_points.add((x, y))
+            initial_points = copy.deepcopy(self._figure.current_points)
+            draw_points = target_points.difference(initial_points)
+            clear_points = initial_points.difference(target_points)
+            self._figure.current_points = target_points
 
-        for x, y in clear_points:
-            self._set_cell_state(x, y, CellState.EMPTY)
-        for x, y in draw_points:
-            self._set_cell_state(x, y, CellState.FALLING)
+            for x, y in clear_points:
+                self._set_cell_state(x, y, CellState.EMPTY)
+            for x, y in draw_points:
+                self._set_cell_state(x, y, CellState.FALLING)
 
-        self._figure.position = point
-        self._refresh_ui()
-        print("Figure placed to {}".format(point))
-        return True
+            self._figure.position = point
+            self._refresh_ui()
+            print("Figure placed to {}".format(point))
+            return True
+        finally:
+            self._is_busy = False
 
     def _move(self, x_diff=0, y_diff=0):
         print("Trying to move...")
-        if self._figure is None or self._figure.position is None:
-            print("There is no figure to move")
-            return False
-        return self.place((self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
+        try:
+            if self._is_busy:
+                print("place() method is busy, doing nothing!")
+                raise BusyWarning()
+            if self._figure is None or self._figure.position is None:
+                print("There is no figure to move")
+                return False
+            return self.place((self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
+        except BusyWarning:
+            pass
 
     def move_left(self):
         return self._move(x_diff=-1)
