@@ -2,6 +2,7 @@ import copy
 import enum
 import random
 import threading
+import tkinter as tk
 
 import custom_threads
 
@@ -73,16 +74,16 @@ class Field:
     """
     Contains information about game field
     """
-    def __init__(self, width, height, repaint_event: threading.Event):
+    def __init__(self, width, height, lock, repaint_event: threading.Event, game_over_event: threading.Event):
         self.width = width
         self.height = height
         # An internal structure to store field state (two-dimensional list)
         self._field = [[Cell() for _ in range(self.height)] for _ in range(self.width)]
-        self._lock = threading.Lock()
+        self._lock = lock
         self._repaint_event = repaint_event
+        self.game_over_event = game_over_event
         # Current falling figure
         self._figure = None
-        self.game_over = False
         self.paused = False
 
     def get_cell_params(self, x, y):
@@ -117,8 +118,9 @@ class Field:
             self._figure = ZFigure()  # TODO: make it random
             can_place = self.place()
             if can_place is False:
-                self.game_over = True
+                self.game_over_event.set()
                 print('Cannot place new figure - game over')
+                self._print_field()
             self._repaint_event.set()
             return can_place
 
@@ -135,7 +137,6 @@ class Field:
                 target_points.add((x, y))
             initial_points = copy.deepcopy(self._figure.current_points)
             draw_points = target_points.difference(initial_points)
-            repaint_points = target_points.union(initial_points)
             clear_points = initial_points.difference(target_points)
             self._figure.current_points = target_points
 
@@ -180,7 +181,7 @@ class Field:
         if self.paused:
             print("Skip tick because of pause")
             return
-        if self.game_over:
+        if self.game_over_event.is_set():
             print("Skip tick because of game over")
             return
         if self._figure is None:
