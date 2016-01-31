@@ -90,7 +90,9 @@ key_handler.force_down_func = field.move_down  # TODO: replace to force down whe
 # Create game instance
 logic = game_logic.Game(field)
 
+tick_thread = custom_threads.TickThread(field.tick, tick_interval_sec=0.5)
 
 # Start application
 repaint_thread.start()
+tick_thread.start()
 root.mainloop()

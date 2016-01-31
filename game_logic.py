@@ -74,7 +74,8 @@ class Field:
         self._repaint_event = repaint_event
         # Current falling figure
         self._figure = None
-        self.spawn_figure()
+        self.game_over = False
+        self.paused = False
 
     def get_cell_params(self, x, y):
         if 0 <= x < self.width and 0 <= y < self.height:
@@ -100,15 +101,25 @@ class Field:
         # self._print_field()
 
     def fix_figure(self):
-        pass
+        with self._lock:
+            for x, y in self._figure.current_points:
+                self._field[x][y].state = CellState.FILLED
+                self._field[x][y].need_img_replace = True
+            self._repaint_event.points = self._figure.current_points
+            self._repaint_event.set()
+            self._figure = None
 
     def spawn_figure(self):
         if self._figure is None:
             # figure_cls = random.choice((ZFigure, ))
             # self._figure = figure_cls()
             self._figure = ZFigure()  # TODO: make it random
-            self.place()
+            can_place = self.place()
+            if can_place is False:
+                self.game_over = True
+                print('Cannot place new figure - game over')
             self._repaint_event.set()
+            return can_place
 
     def place(self, point=(4, 0)):
         with self._lock:
@@ -161,3 +172,20 @@ class Field:
 
     def force_down(self):
         pass
+
+    def tick(self):
+        if self.paused:
+            print("Skip tick because of pause")
+            return
+        if self.game_over:
+            print("Skip tick because of game over")
+            return
+        if self._figure is None:
+            print("Trying to spawn new figure")
+            self.spawn_figure()
+        else:
+            print("Trying to move down current figure")
+            can_move = self.move_down()
+            if can_move is False:
+                print("Cannot move figure anymore, fixing...")
+                self.fix_figure()
