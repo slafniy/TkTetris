@@ -25,16 +25,3 @@ class TickThread(threading.Thread):
             self._time_counter = 0
             sleep_time = self.tick_interval - time.time() + start_time
             time.sleep(sleep_time if sleep_time >= 0 else 0)
-
-
-class RepaintThread(threading.Thread):
-    def __init__(self, repaint_event: threading.Event, repaint_func):
-        super().__init__()
-        self._repaint_func = repaint_func
-        self._repaint_event = repaint_event
-
-    def run(self):
-        while True:
-            if self._repaint_event.is_set():
-                self._repaint_func()
-                self._repaint_event.clear()
