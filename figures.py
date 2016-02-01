@@ -1,8 +1,9 @@
 import enum
+import itertools
 import random
 
 
-class Rotation(enum.IntEnum):
+class Rotation(enum.Enum):
     NORTH = 0
     EAST = 1
     SOUTH = 2
@@ -15,25 +16,17 @@ class Figure:
     """
     def __init__(self):
         self.matrix = {}  # set() of points for each Rotation
-        self.rotation = random.choice([e for e in Rotation])
         self.current_points = set()
         self.position = None
+        self._rotation_generator = itertools.cycle(Rotation)
+        for i in range(random.randint(1, 4)):
+            self.rotation = next(self._rotation_generator)
 
     def current_matrix(self):
         return self.matrix.get(self.rotation, set())
 
     def set_next_rotation(self):
-        get_next = False
-        founded = False
-        while not founded:
-            for rotation in Rotation:
-                if get_next:
-                    self.rotation = rotation
-                    print("Next rotation: {}".format(rotation.name))
-                    founded = True
-                    break
-                if rotation == self.rotation:
-                    get_next = True
+        self.rotation = next(self._rotation_generator)
 
 
 class ZFigure(Figure):
