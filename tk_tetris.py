@@ -32,7 +32,7 @@ ui_field = tk.Canvas(master=root, background=COLOR_BACKGROUND,
 ui_field.grid()
 # TODO: get rid of this magic number!
 ui_field.create_image(2, 2, anchor=tk.NW, image=background_image)
-game_score = tk.Label(master=root, text="Scores: 0")
+game_score = tk.Label(master=root, text="Score: 0")
 game_score.grid(column=1, row=0, sticky=tk.N)
 
 key_handler = keyboard_handler.KeyboardHandler()

@@ -46,7 +46,9 @@ class Game:
         """
         self.width = width
         self.height = height
-        self.tick_interval = 0.2
+        self.tick_interval = 0.35
+        self.score = 0
+        self.level = 1
 
         # Functions to draw and remove cells
         # TODO: write interface for this
@@ -201,6 +203,7 @@ class Game:
         return None
 
     def _clear_rows(self):
+        cleaned_rows_count = 0
         while True:
             row_index = self._get_full_row()
             if row_index is None:
@@ -224,3 +227,8 @@ class Game:
                 self._set_cell_state(x, y + 1, CellState.FILLED)
             time.sleep(self.tick_interval / 2)
             self._refresh_ui()
+            cleaned_rows_count += 1
+        if cleaned_rows_count > 0:
+            pts = 100 * self.level * cleaned_rows_count ** 2
+            self.score += pts
+            print("Added: {} Total: {}".format(pts, self.score))
