@@ -1,3 +1,4 @@
+import abc
 import enum
 import itertools
 import random
@@ -10,7 +11,7 @@ class Rotation(enum.Enum):
     WEST = 3
 
 
-class Figure:
+class Figure(metaclass=abc.ABCMeta):
     """
     Saves a set of figure points and rules of rotation
     """
@@ -22,6 +23,7 @@ class Figure:
         for i in range(random.randint(1, 4)):
             self.rotation = next(self._rotation_generator)
 
+    # TODO: use @property for this, should be nice
     def current_matrix(self):
         return self.matrix.get(self.rotation, set())
 
