@@ -11,6 +11,7 @@ class KeyboardHandler:
     """
     Possibly this will work fine only on Windows
     """
+
     def __init__(self):
         self.move_left_func = None
         self.move_right_func = None

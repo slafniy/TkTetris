@@ -5,7 +5,6 @@ import tkinter as tk
 import game
 import keyboard_handler
 
-
 # Default field parameters
 CELL_SIZE = 24  # In pixels, this is base size for all
 CELL_INTERNAL_BORDER = 4
@@ -13,7 +12,6 @@ FIELD_HEIGHT = 20  # In cells
 FIELD_WIDTH = 10  # In cells
 COLOR_BACKGROUND = "#FF00FF"
 COLOR_FILLED = "#000000"
-
 
 # Create root UI thread and main window
 root = tk.Tk()
@@ -58,6 +56,7 @@ def on_close():
     # TODO: find a way to stop background threads immediately
     root.destroy()
     print("!! Bye !!")
+
 
 root.protocol("WM_DELETE_WINDOW", on_close)
 

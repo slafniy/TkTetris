@@ -14,6 +14,7 @@ class Figure:
     """
     Saves a set of figure points and rules of rotation
     """
+
     def __init__(self):
         self.matrix = {}  # set() of points for each Rotation
         self.current_points = set()
@@ -33,6 +34,7 @@ class ZFigure(Figure):
     """
     Represents "Z" figure
     """
+
     def __init__(self):
         print("Creating Z-figure...")
         super().__init__()
@@ -46,6 +48,7 @@ class SFigure(Figure):
     """
     Represents "Z" figure
     """
+
     def __init__(self):
         print("Creating Z-figure...")
         super().__init__()
@@ -59,6 +62,7 @@ class TFigure(Figure):
     """
     Represents "T" figure
     """
+
     def __init__(self):
         print("Creating T-figure...")
         super().__init__()
@@ -72,6 +76,7 @@ class IFigure(Figure):
     """
     Represents "I" figure
     """
+
     def __init__(self):
         print("Creating I-figure...")
         super().__init__()
@@ -85,6 +90,7 @@ class OFigure(Figure):
     """
     Represents "O" figure
     """
+
     def __init__(self):
         print("Creating O-figure...")
         super().__init__()
@@ -97,6 +103,7 @@ class LFigure(Figure):
     """
     Represents "L" figure
     """
+
     def __init__(self):
         print("Creating L-figure...")
         super().__init__()
@@ -110,6 +117,7 @@ class RLFigure(Figure):
     """
     Represents "Reversed L" figure
     """
+
     def __init__(self):
         print("Creating Reversed-L-figure...")
         super().__init__()

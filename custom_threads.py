@@ -8,8 +8,9 @@ class TickThread(threading.Thread):
     """
 
     def __init__(self, tick_function, tick_interval_sec, game_over_event):
-        super().__init__(target=tick_function)
+        super().__init__(target=tick_function, daemon=True)
         self.tick_interval = tick_interval_sec
+        self._target = tick_function
         self._stop_event = threading.Event()
         self._time_counter = 0
         self._game_over_event = game_over_event

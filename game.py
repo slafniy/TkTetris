@@ -19,6 +19,7 @@ class Cell:
     """
     Describes cell - internal state and related image id
     """
+
     def __init__(self):
         self.state = CellState.EMPTY
         self.image_id = None
@@ -33,6 +34,7 @@ class Game:
     """
     Contains information about game field
     """
+
     def __init__(self, *, width, height, paint_filled, paint_falling, delete_image, refresh_ui,
                  game_over_event: threading.Event):
         """
