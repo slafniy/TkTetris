@@ -1,63 +1,18 @@
 import copy
-import enum
 import random
 import threading
-import typing as t
 
 import time
 
 import custom_threads
-import figures
-
-
-class CellState(enum.IntEnum):
-    EMPTY = 0
-    FILLED = 1
-    FALLING = 2
-
-
-class Cell:
-    """
-    Describes cell - internal state and related image id
-    """
-
-    def __init__(self):
-        self.state = CellState.EMPTY
-        self.image_id = None
+import figures as f
+import field
+import cell as c
 
 
 class BusyWarning(Exception):
     def __init__(self):
         super().__init__()
-
-
-class Field(t.List[t.List[Cell]]):
-    """
-    Game field
-    """
-
-    def __init__(self, height: int, width: int):
-        super().__init__([[Cell() for _ in range(height)] for _ in range(width)])
-        self.width = width
-        self.height = height
-
-    def set_cell_state(self, x: int, y: int, state: CellState) -> Cell:
-        if 0 <= x < self.width and 0 <= y < self.height:
-            cell = self[x][y]
-            cell.state = state
-            return cell
-
-    def get_full_row(self) -> t.Optional[int]:
-        for y in range(self.height - 1, -1, -1):
-            is_full = True
-            for x in range(self.width):
-                if self[x][y].state != CellState.FILLED:
-                    is_full = False
-                    break
-            if is_full:
-                print("Full row:", y)
-                return y
-        return None
 
 
 class Game:
@@ -90,7 +45,7 @@ class Game:
         self._refresh_ui = refresh_ui
 
         # An internal structure to store field state (two-dimensional list)
-        self._field = Field(height, width)
+        self._field = field.Field(height, width)
         self.game_over_event = game_over_event
         # Current falling figure
         self._figure = None
@@ -103,21 +58,21 @@ class Game:
         # TODO: this doesn't look smart, remade
         self._is_busy = True
 
-    def _set_cell_state(self, x, y, state: CellState):
+    def _set_cell_state(self, x, y, state: c.CellState):
         cell = self._field.set_cell_state(x, y, state)
         # Remove existing image
         if cell.image_id is not None:
             self._delete_ui_image(cell.image_id)
         # Paint new image if needed
-        if state == CellState.FILLED:
+        if state == c.CellState.FILLED:
             cell.image_id = self._paint_ui_filled(x, y)
-        elif state == CellState.FALLING:
+        elif state == c.CellState.FALLING:
             cell.image_id = self._paint_ui_falling(x, y)
 
     def _fix_figure(self):
         print("Fixing figure")
         for x, y in self._figure.current_points:
-            self._set_cell_state(x, y, CellState.FILLED)
+            self._set_cell_state(x, y, c.CellState.FILLED)
         self._refresh_ui()
         self._figure = None
 
@@ -127,7 +82,7 @@ class Game:
 
         # Spawn new if needed
         if not self.game_over_event.is_set() and self._figure is None:
-            figure_cls = random.choice(figures.all_figures)
+            figure_cls = random.choice(f.all_figures)
             self._figure = figure_cls()
             can_place = self._place()
             if can_place is False:
@@ -143,7 +98,7 @@ class Game:
                 x = _x + point[0]
                 y = _y + point[1]
                 if not (0 <= x < self._field.width and 0 <= y < self._field.height and
-                        self._field[x][y].state != CellState.FILLED):
+                        self._field[x][y].state != c.CellState.FILLED):
                     # print("Cannot place figure to {}".format(point))
                     return False
                 target_points.add((x, y))
@@ -153,9 +108,9 @@ class Game:
             self._figure.current_points = target_points
 
             for x, y in clear_points:
-                self._set_cell_state(x, y, CellState.EMPTY)
+                self._set_cell_state(x, y, c.CellState.EMPTY)
             for x, y in draw_points:
-                self._set_cell_state(x, y, CellState.FALLING)
+                self._set_cell_state(x, y, c.CellState.FALLING)
 
             self._figure.position = point
             self._refresh_ui()
@@ -227,17 +182,17 @@ class Game:
             cells_to_move_down = []
             for x in range(self._field.width):
                 for y in range(0, row_index):
-                    if self._field[x][y].state == CellState.FILLED:
+                    if self._field[x][y].state == c.CellState.FILLED:
                         cells_to_move_down.append((x, y))
 
             for x, y in cells_to_destroy:
-                self._set_cell_state(x, y, CellState.EMPTY)
+                self._set_cell_state(x, y, c.CellState.EMPTY)
             self._refresh_ui()
             time.sleep(self.tick_interval / 2)
 
             for x, y in cells_to_move_down:
-                self._set_cell_state(x, y, CellState.EMPTY)
+                self._set_cell_state(x, y, c.CellState.EMPTY)
             for x, y in cells_to_move_down:
-                self._set_cell_state(x, y + 1, CellState.FILLED)
+                self._set_cell_state(x, y + 1, c.CellState.FILLED)
             time.sleep(self.tick_interval / 2)
             self._refresh_ui()
