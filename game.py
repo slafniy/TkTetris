@@ -47,6 +47,18 @@ class Field(t.List[t.List[Cell]]):
             cell.state = state
             return cell
 
+    def get_full_row(self) -> t.Optional[int]:
+        for y in range(self.height - 1, -1, -1):
+            is_full = True
+            for x in range(self.width):
+                if self[x][y].state != CellState.FILLED:
+                    is_full = False
+                    break
+            if is_full:
+                print("Full row:", y)
+                return y
+        return None
+
 
 class Game:
     """
@@ -205,21 +217,9 @@ class Game:
                 print("Cannot move figure anymore, fixing...")
                 self._fix_figure()
 
-    def _get_full_row(self):
-        for y in range(self._field.height - 1, -1, -1):
-            is_full = True
-            for x in range(self._field.width):
-                if self._field[x][y].state != CellState.FILLED:
-                    is_full = False
-                    break
-            if is_full:
-                print("Full row:", y)
-                return y
-        return None
-
     def _clear_rows(self):
         while True:
-            row_index = self._get_full_row()
+            row_index = self._field.get_full_row()
             if row_index is None:
                 break
 
