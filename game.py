@@ -2,6 +2,7 @@ import copy
 import enum
 import random
 import threading
+import typing as t
 
 import time
 
@@ -30,6 +31,23 @@ class BusyWarning(Exception):
         super().__init__()
 
 
+class Field(t.List[t.List[Cell]]):
+    """
+    Game field
+    """
+
+    def __init__(self, height: int, width: int):
+        super().__init__([[Cell() for _ in range(height)] for _ in range(width)])
+        self.width = width
+        self.height = height
+
+    def set_cell_state(self, x: int, y: int, state: CellState) -> Cell:
+        if 0 <= x < self.width and 0 <= y < self.height:
+            cell = self[x][y]
+            cell.state = state
+            return cell
+
+
 class Game:
     """
     Contains information about game field
@@ -46,9 +64,8 @@ class Game:
         :param delete_image: Function that deletes image via ID
         :param game_over_event: Event that indicates that game is over
         """
-        self.width = width
-        self.height = height
-        self.tick_interval = 0.2
+
+        self.tick_interval = 0.3
 
         # Functions to draw and remove cells
         # TODO: write interface for this
@@ -61,7 +78,7 @@ class Game:
         self._refresh_ui = refresh_ui
 
         # An internal structure to store field state (two-dimensional list)
-        self._field = [[Cell() for _ in range(self.height)] for _ in range(self.width)]
+        self._field = Field(height, width)
         self.game_over_event = game_over_event
         # Current falling figure
         self._figure = None
@@ -75,17 +92,15 @@ class Game:
         self._is_busy = True
 
     def _set_cell_state(self, x, y, state: CellState):
-        if 0 <= x < self.width and 0 <= y < self.height:
-            cell = self._field[x][y]
-            cell.state = state
-            # Remove existing image
-            if cell.image_id is not None:
-                self._delete_ui_image(cell.image_id)
-            # Paint new image if needed
-            if state == CellState.FILLED:
-                cell.image_id = self._paint_ui_filled(x, y)
-            elif state == CellState.FALLING:
-                cell.image_id = self._paint_ui_falling(x, y)
+        cell = self._field.set_cell_state(x, y, state)
+        # Remove existing image
+        if cell.image_id is not None:
+            self._delete_ui_image(cell.image_id)
+        # Paint new image if needed
+        if state == CellState.FILLED:
+            cell.image_id = self._paint_ui_filled(x, y)
+        elif state == CellState.FALLING:
+            cell.image_id = self._paint_ui_falling(x, y)
 
     def _fix_figure(self):
         print("Fixing figure")
@@ -115,7 +130,7 @@ class Game:
             for _x, _y in self._figure.current_matrix():
                 x = _x + point[0]
                 y = _y + point[1]
-                if not (0 <= x < self.width and 0 <= y < self.height and
+                if not (0 <= x < self._field.width and 0 <= y < self._field.height and
                         self._field[x][y].state != CellState.FILLED):
                     # print("Cannot place figure to {}".format(point))
                     return False
@@ -191,9 +206,9 @@ class Game:
                 self._fix_figure()
 
     def _get_full_row(self):
-        for y in range(self.height - 1, -1, -1):
+        for y in range(self._field.height - 1, -1, -1):
             is_full = True
-            for x in range(self.width):
+            for x in range(self._field.width):
                 if self._field[x][y].state != CellState.FILLED:
                     is_full = False
                     break
@@ -208,9 +223,9 @@ class Game:
             if row_index is None:
                 break
 
-            cells_to_destroy = [(x, row_index) for x in range(self.width)]
+            cells_to_destroy = [(x, row_index) for x in range(self._field.width)]
             cells_to_move_down = []
-            for x in range(self.width):
+            for x in range(self._field.width):
                 for y in range(0, row_index):
                     if self._field[x][y].state == CellState.FILLED:
                         cells_to_move_down.append((x, y))
