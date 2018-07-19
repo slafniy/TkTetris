@@ -1,6 +1,7 @@
 import copy
 import random
 import threading
+import typing as t
 
 import time
 
@@ -48,7 +49,7 @@ class Game:
         self._field = field.Field(height, width)
         self.game_over_event = game_over_event
         # Current falling figure
-        self._figure = None
+        self._figure: t.Optional[f.Figure] = None
         self.paused = False
 
         self.tick_thread = custom_threads.TickThread(self._tick, self.tick_interval, game_over_event)
