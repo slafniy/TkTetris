@@ -9,6 +9,7 @@ import keyboard_handler
 CELL_SIZE = 24  # In pixels, this is base size for all
 CELL_INTERNAL_BORDER = 4
 FIELD_HEIGHT = 20  # In cells
+FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
 FIELD_WIDTH = 10  # In cells
 COLOR_BACKGROUND = "#FF00FF"
 COLOR_FILLED = "#000000"
@@ -42,13 +43,13 @@ root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
 def paint_filled(x, y):
     _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
-    _y = y * CELL_SIZE + 2  # TODO: get rid of this magic
+    _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
     return ui_field.create_image(_x, _y, anchor=tk.NW, image=filled_cell_image)
 
 
 def paint_falling(x, y):
     _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
-    _y = y * CELL_SIZE + 2  # TODO: get rid of this magic
+    _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
     return ui_field.create_image(_x, _y, anchor=tk.NW, image=falling_cell_image)
 
 
@@ -63,7 +64,7 @@ root.protocol("WM_DELETE_WINDOW", on_close)
 game_over_event = threading.Event()
 
 # Game field binds UI and logic together
-g = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT,
+g = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
               paint_filled=paint_filled,
               paint_falling=paint_falling,
               delete_image=ui_field.delete,

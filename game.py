@@ -33,7 +33,7 @@ class Game:
         :param game_over_event: Event that indicates that game is over
         """
 
-        self.tick_interval = 0.3
+        self.tick_interval = 0.25
 
         # Functions to draw and remove cells
         # TODO: write interface for this
@@ -85,13 +85,13 @@ class Game:
         if not self.game_over_event.is_set() and self._figure is None:
             figure_cls = random.choice(f.all_figures)
             self._figure = figure_cls()
-            can_place = self._place()
+            can_place = self._place(f.Point(4, 0))
             if can_place is False:
                 self.game_over_event.set()
                 print('Cannot place new figure - game over')
             return can_place
 
-    def _place(self, point=f.Point(4, 0)):
+    def _place(self, point: f.Point):
         self._is_busy = True
         try:
             target_points = set()
