@@ -59,21 +59,21 @@ class Game:
         # TODO: this doesn't look smart, remade
         self._is_busy = True
 
-    def _set_cell_state(self, x, y, state: c.CellState):
-        cell = self._field.set_cell_state(x, y, state)
+    def _set_cell_state(self, point: f.Point, state: c.CellState):
+        cell = self._field.set_cell_state(point, state)
         # Remove existing image
         if cell.image_id is not None:
             self._delete_ui_image(cell.image_id)
         # Paint new image if needed
         if state == c.CellState.FILLED:
-            cell.image_id = self._paint_ui_filled(x, y)
+            cell.image_id = self._paint_ui_filled(point.x, point.y)
         elif state == c.CellState.FALLING:
-            cell.image_id = self._paint_ui_falling(x, y)
+            cell.image_id = self._paint_ui_falling(point.x, point.y)
 
     def _fix_figure(self):
         print("Fixing figure")
-        for x, y in self._figure.current_points:
-            self._set_cell_state(x, y, c.CellState.FILLED)
+        for point in self._figure.current_points:
+            self._set_cell_state(point, c.CellState.FILLED)
         self._refresh_ui()
         self._figure = None
 
@@ -91,7 +91,7 @@ class Game:
                 print('Cannot place new figure - game over')
             return can_place
 
-    def _place(self, point=(4, 0)):
+    def _place(self, point=f.Point(4, 0)):
         self._is_busy = True
         try:
             target_points = set()
@@ -102,16 +102,16 @@ class Game:
                         self._field[x][y].state != c.CellState.FILLED):
                     # print("Cannot place figure to {}".format(point))
                     return False
-                target_points.add((x, y))
+                target_points.add(f.Point(x, y))
             initial_points = copy.deepcopy(self._figure.current_points)
             draw_points = target_points.difference(initial_points)
             clear_points = initial_points.difference(target_points)
             self._figure.current_points = target_points
 
             for x, y in clear_points:
-                self._set_cell_state(x, y, c.CellState.EMPTY)
+                self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
             for x, y in draw_points:
-                self._set_cell_state(x, y, c.CellState.FALLING)
+                self._set_cell_state(f.Point(x, y), c.CellState.FALLING)
 
             self._figure.position = point
             self._refresh_ui()
@@ -129,7 +129,7 @@ class Game:
             if self._figure is None or self._figure.position is None:
                 # print("There is no figure to move")
                 return False
-            return self._place((self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
+            return self._place(f.Point(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
         except BusyWarning:
             pass
 
@@ -150,9 +150,9 @@ class Game:
             current_rotation = self._figure.rotation
             self._figure.set_next_rotation()
             if not self._place(self._figure.position):
-                if not self._place((self._figure.position[0] - 1, self._figure.position[1])):
-                    if not self._place((self._figure.position[0], self._figure.position[1] - 1)):
-                        if not self._place((self._figure.position[0] - 1, self._figure.position[1] - 1)):
+                if not self._place(f.Point(self._figure.position[0] - 1, self._figure.position[1])):
+                    if not self._place(f.Point(self._figure.position[0], self._figure.position[1] - 1)):
+                        if not self._place(f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1)):
                             self._figure.rotation = current_rotation
 
     def _tick(self):
@@ -187,13 +187,13 @@ class Game:
                         cells_to_move_down.append((x, y))
 
             for x, y in cells_to_destroy:
-                self._set_cell_state(x, y, c.CellState.EMPTY)
+                self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
             self._refresh_ui()
             time.sleep(self.tick_interval / 2)
 
             for x, y in cells_to_move_down:
-                self._set_cell_state(x, y, c.CellState.EMPTY)
+                self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
             for x, y in cells_to_move_down:
-                self._set_cell_state(x, y + 1, c.CellState.FILLED)
+                self._set_cell_state(f.Point(x, y + 1), c.CellState.FILLED)
             time.sleep(self.tick_interval / 2)
             self._refresh_ui()

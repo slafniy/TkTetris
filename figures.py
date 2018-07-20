@@ -4,7 +4,12 @@ import random
 import typing as t
 
 
-class Rotation(enum.Enum):
+class Point(t.NamedTuple):
+    x: int
+    y: int
+
+
+class Rotation(enum.IntEnum):
     NORTH = 0
     EAST = 1
     SOUTH = 2
@@ -18,13 +23,13 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
 
     def __init__(self):
         super().__init__()
-        self.current_points = set()
+        self.current_points: t.Set[Point] = set()
         self.position = None
         self._rotation_generator = itertools.cycle(Rotation)
         for i in range(random.randint(1, 4)):
             self.rotation = next(self._rotation_generator)
 
-    def current_matrix(self):
+    def current_matrix(self) -> t.Set[Point]:
         return self.get(self.rotation, set())
 
     def set_next_rotation(self):

@@ -1,6 +1,7 @@
 import typing as t
 
 import cell as c
+import figures as f
 
 
 class Field(t.List[t.List[c.Cell]]):
@@ -13,11 +14,15 @@ class Field(t.List[t.List[c.Cell]]):
         self.width = width
         self.height = height
 
-    def set_cell_state(self, x: int, y: int, state: c.CellState) -> c.Cell:
-        if 0 <= x < self.width and 0 <= y < self.height:
-            cell = self[x][y]
+    def set_cell_state(self, point: f.Point, state: c.CellState) -> c.Cell:
+        assert isinstance(point, f.Point)
+        if 0 <= point.x < self.width and 0 <= point.y < self.height:
+            cell = self.get_cell(point)
             cell.state = state
             return cell
+
+    def get_cell(self, point: f.Point) -> c.Cell:
+        return self[point.x][point.y]
 
     def get_full_row(self) -> t.Optional[int]:
         for y in range(self.height - 1, -1, -1):
