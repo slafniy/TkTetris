@@ -5,7 +5,7 @@ import typing as t
 
 import time
 
-from src import custom_threads, figures as f, cell as c, field
+import custom_threads, figures as f, cell as c, field
 
 
 class BusyWarning(Exception):
