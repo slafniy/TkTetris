@@ -1,7 +1,6 @@
 import typing as t
 
-import cell as c
-import figures as f
+from src import figures as f, cell as c
 
 
 class Field(t.List[t.List[c.Cell]]):

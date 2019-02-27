@@ -2,8 +2,7 @@ import os
 import threading
 import tkinter as tk
 
-import game
-import keyboard_handler
+from src import keyboard_handler, game
 
 # Default field parameters
 CELL_SIZE = 24  # In pixels, this is base size for all
@@ -18,7 +17,7 @@ COLOR_FILLED = "#000000"
 root = tk.Tk()
 
 # Load resources
-resources_path = os.path.join('Resources/Default')
+resources_path = os.path.join('../Resources/Default')
 filled_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_filled.png"))
 falling_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falling.png"))
 background_image = tk.PhotoImage(file=os.path.join(resources_path, "background.png"))
