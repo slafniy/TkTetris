@@ -76,5 +76,7 @@ def main():
     key_handler.rotate_func = g.rotate
     # TODO: bind all
 
+    root.geometry("+960+500")
+
     # Start application
     root.mainloop()
