@@ -18,7 +18,7 @@ class Game:
     Contains information about game field
     """
 
-    def __init__(self, *, width, height, paint_filled, paint_falling, delete_image, refresh_ui,
+    def __init__(self, *, width, height, paint_filled, paint_falling, delete_image, toggle_pause, refresh_ui,
                  game_over_event: threading.Event):
         """
         Field constructor. Initializes field matrix, should control the game.
@@ -27,6 +27,7 @@ class Game:
         :param paint_filled: Function that paints filled cell on UI
         :param paint_falling: Function that paints falling cell on UI
         :param delete_image: Function that deletes image via ID
+        :param toggle_pause: Function that shows/hides PAUSE text
         :param game_over_event: Event that indicates that game is over
         """
 
@@ -37,9 +38,11 @@ class Game:
         assert callable(paint_filled)
         assert callable(paint_falling)
         assert callable(delete_image)
+        assert callable(toggle_pause)
         self._paint_ui_filled = paint_filled
         self._paint_ui_falling = paint_falling
         self._delete_ui_image = delete_image
+        self._toggle_pause = toggle_pause
         self._refresh_ui = refresh_ui
 
         # An internal structure to store field state (two-dimensional list)
@@ -118,13 +121,12 @@ class Game:
             self._is_busy = False
 
     def _move(self, x_diff=0, y_diff=0):
-        # print("Trying to move...")
+        if self.paused:
+            return
         try:
             if self._is_busy:
-                # print("place() method is busy, doing nothing!")
                 raise BusyWarning()
             if self._figure is None or self._figure.position is None:
-                # print("There is no figure to move")
                 return False
             return self._place(f.Point(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
         except BusyWarning:
@@ -142,7 +144,13 @@ class Game:
     def force_down(self):
         pass
 
+    def pause(self):
+        self.paused = not self.paused
+        self._toggle_pause()
+
     def rotate(self):
+        if self.paused:
+            return
         if not self.game_over_event.is_set() and self._figure is not None:
             current_rotation = self._figure.rotation
             self._figure.set_next_rotation()

@@ -12,7 +12,6 @@ class TickThread(threading.Thread):
         self.tick_interval = tick_interval_sec
         self._target = tick_function
         self._stop_event = threading.Event()
-        self._time_counter = 0
         self._game_over_event = game_over_event
 
     def stop(self):
@@ -23,6 +22,5 @@ class TickThread(threading.Thread):
         while not self._stop_event.is_set() and not self._game_over_event.is_set():
             start_time = time.time()
             self._target()
-            self._time_counter = 0
             sleep_time = self.tick_interval - time.time() + start_time
             time.sleep(sleep_time if sleep_time >= 0 else 0)

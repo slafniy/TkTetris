@@ -12,7 +12,6 @@ FIELD_HEIGHT = 20  # In cells
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
 FIELD_WIDTH = 10  # In cells
 COLOR_BACKGROUND = "#FF00FF"
-COLOR_FILLED = "#000000"
 
 
 def main():
@@ -25,11 +24,15 @@ def main():
     falling_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falling.png"))
     background_image = tk.PhotoImage(file=os.path.join(resources_path, "background.png"))
     game_over_image = tk.PhotoImage(file=os.path.join(resources_path, "game_over.png"))
+    pause_image = tk.PhotoImage(file=os.path.join(resources_path, "pause.png"))
 
     # Draw background, draw labels etc.
     ui_field = tk.Canvas(master=root, background=COLOR_BACKGROUND,
                          height=FIELD_HEIGHT * CELL_SIZE,
                          width=FIELD_WIDTH * CELL_SIZE)
+
+    ui_field.pause_image_id: int = None  # Create field to control pause TODO: looks terrible. Or not?
+
     ui_field.grid()
     # TODO: get rid of this magic number!
     ui_field.create_image(2, 2, anchor=tk.NW, image=background_image)
@@ -52,10 +55,17 @@ def main():
         _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
         return ui_field.create_image(_x, _y, anchor=tk.NW, image=falling_cell_image)
 
+    def toggle_pause():
+        if ui_field.pause_image_id is not None:
+            ui_field.delete(ui_field.pause_image_id)
+            ui_field.pause_image_id = None
+        else:
+            ui_field.pause_image_id = ui_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
+                                                            FIELD_HEIGHT / 2 * CELL_SIZE,
+                                                            anchor=tk.CENTER, image=pause_image)
+
     def on_close():
-        # TODO: find a way to stop background threads immediately
         root.destroy()
-        print("!! Bye !!")
 
     root.protocol("WM_DELETE_WINDOW", on_close)
 
@@ -66,6 +76,7 @@ def main():
                   paint_filled=paint_filled,
                   paint_falling=paint_falling,
                   delete_image=ui_field.delete,
+                  toggle_pause=toggle_pause,
                   refresh_ui=ui_field.update,
                   game_over_event=game_over_event)
 
@@ -74,7 +85,7 @@ def main():
     key_handler.move_right_func = g.move_right
     key_handler.force_down_func = g.move_down  # TODO: replace to force down when ready
     key_handler.rotate_func = g.rotate
-    # TODO: bind all
+    key_handler.pause_func = g.pause
 
     root.geometry("+960+500")
 
