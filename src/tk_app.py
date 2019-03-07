@@ -19,7 +19,7 @@ def main():
     root = tk.Tk()
 
     # Load resources
-    resources_path = os.path.join(os.path.realpath(__file__), '../../res/Default')
+    resources_path = os.path.join(os.path.realpath(__file__), '../../res/ClassicMonochrome')
     filled_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_filled.png"))
     falling_cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falling.png"))
     background_image = tk.PhotoImage(file=os.path.join(resources_path, "background.png"))
