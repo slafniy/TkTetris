@@ -1,7 +1,9 @@
 import os
 import threading
 import tkinter as tk
+import typing as t
 
+import figures
 import keyboard_handler
 import game
 
@@ -36,12 +38,19 @@ def main():
     ui_field.grid()
     # TODO: get rid of this magic number!
     ui_field.create_image(2, 2, anchor=tk.NW, image=background_image)
-    game_score = tk.Label(master=root, text="Scores: 0")
-    game_score.grid(column=1, row=0, sticky=tk.N)
+    # game_score = tk.Label(master=root, text="Scores: 0")
+    # game_score.grid(column=1, row=0, sticky=tk.N)
 
-    key_handler = keyboard_handler.KeyboardHandler()
+    # Create area to show the next figure
+    next_figure_field = tk.Canvas(master=root, background=COLOR_BACKGROUND,
+                                  height=4 * CELL_SIZE,
+                                  width=4 * CELL_SIZE)
+    next_figure_field.create_image(0, 0, anchor=tk.NW, image=background_image)
+    next_figure_field.grid(column=1, row=0, sticky=tk.N)
+
 
     # Bind keyboard listener
+    key_handler = keyboard_handler.KeyboardHandler()
     root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
     root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
@@ -54,6 +63,13 @@ def main():
         _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
         _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
         return ui_field.create_image(_x, _y, anchor=tk.NW, image=falling_cell_image)
+
+    def paint_next(points: t.List[figures.Point]):
+        next_figure_field.create_image(0, 0, anchor=tk.NW, image=background_image)  # clear all previous
+        for x, y in points:
+            _x = x * CELL_SIZE + 2
+            _y = y * CELL_SIZE + 2
+            next_figure_field.create_image(_x, _y, anchor=tk.NW, image=falling_cell_image)
 
     def toggle_pause():
         if ui_field.pause_image_id is not None:
@@ -75,6 +91,7 @@ def main():
     g = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
                   paint_filled=paint_filled,
                   paint_falling=paint_falling,
+                  paint_next=paint_next,
                   delete_image=ui_field.delete,
                   toggle_pause=toggle_pause,
                   refresh_ui=ui_field.update,

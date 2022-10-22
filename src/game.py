@@ -18,8 +18,8 @@ class Game:
     Contains information about game field
     """
 
-    def __init__(self, *, width, height, paint_filled, paint_falling, delete_image, toggle_pause, refresh_ui,
-                 game_over_event: threading.Event):
+    def __init__(self, *, width, height, paint_filled, paint_falling, paint_next, delete_image, toggle_pause,
+                 refresh_ui, game_over_event: threading.Event):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
@@ -31,25 +31,27 @@ class Game:
         :param game_over_event: Event that indicates that game is over
         """
 
-        self.tick_interval = 0.25
+        self.tick_interval = 0.5
 
         # Functions to draw and remove cells
         # TODO: write interface for this
         assert callable(paint_filled)
         assert callable(paint_falling)
+        assert callable(paint_next)
         assert callable(delete_image)
         assert callable(toggle_pause)
         self._paint_ui_filled = paint_filled
         self._paint_ui_falling = paint_falling
+        self._paint_ui_next = paint_next
         self._delete_ui_image = delete_image
         self._toggle_pause = toggle_pause
         self._refresh_ui = refresh_ui
 
-        # An internal structure to store field state (two-dimensional list)
-        self._field = field.Field(height, width)
+        self._field = field.Field(height, width)  # An internal structure to store field state (two-dimensional list)
         self.game_over_event = game_over_event
-        # Current falling figure
-        self._figure: t.Optional[f.Figure] = None
+        self._figure: t.Optional[f.Figure] = None  # Current falling figure
+        self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
+
         self.paused = False
 
         self.tick_thread = custom_threads.TickThread(self._tick, self.tick_interval, game_over_event)
@@ -83,8 +85,9 @@ class Game:
 
         # Spawn new if needed
         if not self.game_over_event.is_set() and self._figure is None:
-            figure_cls = random.choice(f.all_figures)
-            self._figure = figure_cls()
+            self._figure = self._next_figure
+            self._next_figure = random.choice(f.all_figures)()
+            self._paint_ui_next(self._next_figure.current_matrix())
             can_place = self._place(f.Point(4, 0))
             if can_place is False:
                 self.game_over_event.set()
