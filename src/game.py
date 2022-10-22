@@ -51,6 +51,7 @@ class Game:
         self.game_over_event = game_over_event
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
+        self._paint_ui_next(self._next_figure.current_matrix())
 
         self.paused = False
 

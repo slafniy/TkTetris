@@ -44,8 +44,8 @@ class ZFigure(Figure):
     def __init__(self):
         print("Creating Z-figure...")
         super().__init__()
-        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 0), (1, 0), (1, 1), (2, 1)}
-        self[Rotation.EAST] = self[Rotation.WEST] = {(1, 0), (0, 1), (1, 1), (0, 2)}
+        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 2), (0, 3), (1, 1), (1, 2)}
+        self[Rotation.EAST] = self[Rotation.WEST] = {(0, 2), (1, 2), (1, 3), (2, 3)}
 
 
 class SFigure(Figure):
@@ -56,8 +56,8 @@ class SFigure(Figure):
     def __init__(self):
         print("Creating Z-figure...")
         super().__init__()
-        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 1), (1, 0), (2, 0), (1, 1)}
-        self[Rotation.EAST] = self[Rotation.WEST] = {(0, 0), (0, 1), (1, 1), (1, 2)}
+        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 1), (0, 2), (1, 2), (1, 3)}
+        self[Rotation.EAST] = self[Rotation.WEST] = {(0, 3), (1, 2), (1, 3), (2, 2)}
 
 
 class TFigure(Figure):
@@ -68,10 +68,10 @@ class TFigure(Figure):
     def __init__(self):
         print("Creating T-figure...")
         super().__init__()
-        self[Rotation.NORTH] = {(0, 0), (1, 0), (2, 0), (1, 1)}
-        self[Rotation.EAST] = {(0, 1), (1, 0), (1, 1), (1, 2)}
-        self[Rotation.SOUTH] = {(1, 0), (0, 1), (1, 1), (2, 1)}
-        self[Rotation.WEST] = {(0, 0), (0, 1), (0, 2), (1, 1)}
+        self[Rotation.NORTH] = {(0, 3), (1, 2), (1, 3), (2, 3)}
+        self[Rotation.EAST] = {(0, 1), (0, 2), (0, 3), (1, 2)}
+        self[Rotation.SOUTH] = {(0, 2), (1, 2), (2, 2), (1, 3)}
+        self[Rotation.WEST] = {(0, 2), (1, 1), (1, 2), (1, 3)}
 
 
 class IFigure(Figure):
@@ -82,8 +82,8 @@ class IFigure(Figure):
     def __init__(self):
         print("Creating I-figure...")
         super().__init__()
-        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 0), (1, 0), (2, 0), (3, 0)}
-        self[Rotation.EAST] = self[Rotation.WEST] = {(0, 0), (0, 1), (0, 2), (0, 3)}
+        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 0), (0, 1), (0, 2), (0, 3)}
+        self[Rotation.EAST] = self[Rotation.WEST] = {(0, 3), (1, 3), (2, 3), (3, 3)}
 
 
 class OFigure(Figure):
@@ -95,7 +95,7 @@ class OFigure(Figure):
         print("Creating O-figure...")
         super().__init__()
         self[Rotation.NORTH] = self[Rotation.SOUTH] = self[Rotation.WEST] = self[Rotation.EAST] \
-            = {(0, 0), (1, 1), (1, 0), (0, 1)}
+            = {(0, 2), (0, 3), (1, 2), (1, 3)}
 
 
 class LFigure(Figure):
@@ -106,10 +106,10 @@ class LFigure(Figure):
     def __init__(self):
         print("Creating L-figure...")
         super().__init__()
-        self[Rotation.NORTH] = {(0, 0), (0, 1), (0, 2), (1, 2)}
-        self[Rotation.EAST] = {(0, 0), (1, 0), (2, 0), (0, 1)}
-        self[Rotation.SOUTH] = {(0, 0), (1, 0), (1, 1), (1, 2)}
-        self[Rotation.WEST] = {(2, 0), (0, 1), (1, 1), (2, 1)}
+        self[Rotation.NORTH] = {(0, 1), (0, 2), (0, 3), (1, 3)}
+        self[Rotation.EAST] = {(0, 2), (0, 3), (1, 2), (2, 2)}
+        self[Rotation.SOUTH] = {(0, 1), (1, 1), (1, 2), (1, 3)}
+        self[Rotation.WEST] = {(0, 3), (1, 3), (2, 2), (2, 3)}
 
 
 class RLFigure(Figure):
@@ -120,10 +120,10 @@ class RLFigure(Figure):
     def __init__(self):
         print("Creating Reversed-L-figure...")
         super().__init__()
-        self[Rotation.NORTH] = {(0, 0), (0, 1), (0, 2), (1, 0)}
-        self[Rotation.EAST] = {(0, 0), (1, 0), (2, 0), (2, 1)}
-        self[Rotation.SOUTH] = {(0, 2), (1, 0), (1, 1), (1, 2)}
-        self[Rotation.WEST] = {(0, 0), (0, 1), (1, 1), (2, 1)}
+        self[Rotation.NORTH] = {(0, 3), (1, 1), (1, 2), (1, 3)}
+        self[Rotation.EAST] = {(0, 2), (0, 3), (1, 3), (2, 3)}
+        self[Rotation.SOUTH] = {(0, 1), (0, 2), (0, 3), (1, 1)}
+        self[Rotation.WEST] = {(0, 2), (1, 2), (2, 2), (2, 3)}
 
 
 all_figures = [ZFigure, TFigure, IFigure, SFigure, OFigure, LFigure, RLFigure]
