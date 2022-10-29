@@ -11,7 +11,7 @@ ROTATE = 38  # Up arrow
 FORCE_DOWN = 40  # Down arrow
 PAUSE = 32  # Space
 
-TICK_INTERVAL = 0.1
+TICK_INTERVAL = 0.08
 TICK_DELAY = 0.2
 
 
@@ -45,6 +45,9 @@ class KeyboardHandler:
         kp.is_pressed = True
         if kp.press_time is None:
             kp.press_time = time.time()
+        if not kp.has_been_processed_once:
+            self._process_keys(event.keycode)
+        kp.has_been_processed_once = True
 
     def on_key_release(self, event):
         kp = self._keys_pressed[event.keycode]
@@ -55,10 +58,8 @@ class KeyboardHandler:
     def _process_pressed_keys(self):
         # Make a decision what should we do with this key
         for code, kp in self._keys_pressed.items():
-            if not kp.is_pressed or \
-                    (time.time() - kp.press_time < TICK_DELAY and kp.has_been_processed_once):
+            if not kp.is_pressed or time.time() - kp.press_time < TICK_DELAY or not kp.has_been_processed_once:
                 continue
-            kp.has_been_processed_once = True
             self._process_keys(code)
 
     def _process_keys(self, code):

@@ -87,21 +87,15 @@ def main():
     root.protocol("WM_DELETE_WINDOW", on_close)
 
     # Game field binds UI and logic together
-    g = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-                  paint_filled=paint_filled,
-                  paint_falling=paint_falling,
-                  paint_next=paint_next,
-                  delete_image=ui_field.delete,
-                  toggle_pause=toggle_pause,
-                  refresh_ui=ui_field.update,
-                  game_over_event=game_over_event)
-
-    # Bind keyboard handler to Field methods
-    key_handler.move_left_func = g.move_left
-    key_handler.move_right_func = g.move_right
-    key_handler.force_down_func = g.move_down  # TODO: replace to force down when ready
-    key_handler.rotate_func = g.rotate
-    key_handler.pause_func = g.pause
+    game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
+              paint_filled=paint_filled,
+              paint_falling=paint_falling,
+              paint_next=paint_next,
+              delete_image=ui_field.delete,
+              toggle_pause=toggle_pause,
+              refresh_ui=ui_field.update,
+              game_over_event=game_over_event,
+              keyboard_handler=key_handler)
 
     root.geometry("+960+500")
 

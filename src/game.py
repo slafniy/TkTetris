@@ -1,14 +1,16 @@
 import copy
 import random
 import threading
+import time
 import typing as t
 
-import time
+import cell as c
+import custom_threads
+import field
+import figures as f
+import keyboard_handler as kbh
 
-import custom_threads, figures as f, cell as c, field
-
-
-TICK_INTERVAL = 0.8
+TICK_INTERVAL = 0.6
 
 
 class BusyWarning(Exception):
@@ -22,7 +24,7 @@ class Game:
     """
 
     def __init__(self, *, width, height, paint_filled, paint_falling, paint_next, delete_image, toggle_pause,
-                 refresh_ui, game_over_event: threading.Event):
+                 refresh_ui, game_over_event: threading.Event, keyboard_handler: kbh.KeyboardHandler):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
@@ -34,7 +36,13 @@ class Game:
         :param game_over_event: Event that indicates that game is over
         """
 
-        self.tick_interval = TICK_INTERVAL
+        # Bind keyboard handler to Field methods
+        self._keyboard_handler = keyboard_handler
+        self._keyboard_handler.move_left_func = self.move_left
+        self._keyboard_handler.move_right_func = self.move_right
+        self._keyboard_handler.force_down_func = self.move_down  # TODO: replace to force down when ready
+        self._keyboard_handler.rotate_func = self.rotate
+        self._keyboard_handler.pause_func = self.pause
 
         # Functions to draw and remove cells
         # TODO: write interface for this
@@ -58,7 +66,7 @@ class Game:
 
         self.paused = False
 
-        self.tick_thread = custom_threads.TickThread(self._tick, self.tick_interval, game_over_event)
+        self.tick_thread = custom_threads.TickThread(self._tick, TICK_INTERVAL, game_over_event)
         self.tick_thread.start()
 
         # To not allow simultaneous call of place()
@@ -201,11 +209,11 @@ class Game:
             for x, y in cells_to_destroy:
                 self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
             self._refresh_ui()
-            time.sleep(self.tick_interval / 2)
+            time.sleep(TICK_INTERVAL / 2)
 
             for x, y in cells_to_move_down:
                 self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
             for x, y in cells_to_move_down:
                 self._set_cell_state(f.Point(x, y + 1), c.CellState.FILLED)
-            time.sleep(self.tick_interval / 2)
+            time.sleep(TICK_INTERVAL / 2)
             self._refresh_ui()
