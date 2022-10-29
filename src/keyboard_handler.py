@@ -26,6 +26,7 @@ class KeyboardHandler:
     """
     Handles key pressing/release avoiding OS specific timers for key repeat
     """
+    REPEAT_KEYS = {MOVE_RIGHT, MOVE_LEFT}  # repeat only this, other keys processed once per press
 
     def __init__(self, game_over_event):
         self.move_left_func = None
@@ -58,7 +59,8 @@ class KeyboardHandler:
     def _process_pressed_keys(self):
         # Make a decision what should we do with this key
         for code, kp in self._keys_pressed.items():
-            if not kp.is_pressed or time.time() - kp.press_time < TICK_DELAY or not kp.has_been_processed_once:
+            if code not in self.REPEAT_KEYS or \
+                    not kp.is_pressed or time.time() - kp.press_time < TICK_DELAY or not kp.has_been_processed_once:
                 continue
             self._process_keys(code)
 
