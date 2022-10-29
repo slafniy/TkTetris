@@ -48,9 +48,10 @@ def main():
     next_figure_field.create_image(0, 0, anchor=tk.NW, image=background_image)
     next_figure_field.grid(column=1, row=0, sticky=tk.N)
 
+    game_over_event = threading.Event()
 
     # Bind keyboard listener
-    key_handler = keyboard_handler.KeyboardHandler()
+    key_handler = keyboard_handler.KeyboardHandler(game_over_event)
     root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
     root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
@@ -84,8 +85,6 @@ def main():
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", on_close)
-
-    game_over_event = threading.Event()
 
     # Game field binds UI and logic together
     g = game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,

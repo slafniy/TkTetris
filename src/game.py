@@ -8,6 +8,9 @@ import time
 import custom_threads, figures as f, cell as c, field
 
 
+TICK_INTERVAL = 0.8
+
+
 class BusyWarning(Exception):
     def __init__(self):
         super().__init__()
@@ -31,7 +34,7 @@ class Game:
         :param game_over_event: Event that indicates that game is over
         """
 
-        self.tick_interval = 0.5
+        self.tick_interval = TICK_INTERVAL
 
         # Functions to draw and remove cells
         # TODO: write interface for this
