@@ -24,7 +24,7 @@ class Game:
     """
 
     def __init__(self, *, width, height, paint_filled, paint_falling, paint_next, delete_image, toggle_pause,
-                 refresh_ui, game_over_event: threading.Event, keyboard_handler: kbh.KeyboardHandler):
+                 refresh_ui, game_over_event: threading.Event, game_over_ui, keyboard_handler: kbh.KeyboardHandler):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
@@ -52,12 +52,14 @@ class Game:
         assert callable(paint_next)
         assert callable(delete_image)
         assert callable(toggle_pause)
+        assert callable(game_over_ui)
         self._paint_ui_filled = paint_filled
         self._paint_ui_falling = paint_falling
         self._paint_ui_next = paint_next
         self._delete_ui_image = delete_image
         self._toggle_pause = toggle_pause
         self._refresh_ui = refresh_ui
+        self._game_over_ui = game_over_ui
 
         self._field = field.Field(height, width)  # An internal structure to store field state (two-dimensional list)
         self.game_over_event = game_over_event
@@ -104,6 +106,7 @@ class Game:
             can_place = self._place(f.Point(4, 0))
             if can_place is False:
                 self.game_over_event.set()
+                self._game_over_ui()
                 print('Cannot place new figure - game over')
             return can_place
 

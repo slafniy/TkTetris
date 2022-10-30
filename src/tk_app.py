@@ -75,6 +75,11 @@ def main():
             _y = y * CELL_SIZE + 2
             next_figure_field.create_image(_x, _y, anchor=tk.NW, image=falling_cell_image)
 
+    def game_over():
+        ui_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
+                              FIELD_HEIGHT / 2 * CELL_SIZE,
+                              anchor=tk.CENTER, image=game_over_image)
+
     def toggle_pause():
         if ui_field.pause_image_id is not None:
             ui_field.delete(ui_field.pause_image_id)
@@ -98,6 +103,7 @@ def main():
               toggle_pause=toggle_pause,
               refresh_ui=ui_field.update,
               game_over_event=game_over_event,
+              game_over_ui=game_over,
               keyboard_handler=key_handler)
 
     root.geometry("+960+500")
