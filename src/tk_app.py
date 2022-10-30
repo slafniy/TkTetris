@@ -7,6 +7,8 @@ import figures
 import keyboard_handler
 import game
 
+VERSION = '1.0d'
+
 # Default field parameters
 CELL_SIZE = 24  # In pixels, this is base size for all
 CELL_INTERNAL_BORDER = 4
@@ -19,6 +21,7 @@ COLOR_BACKGROUND = "#FF00FF"
 def main():
     # Create root UI thread and main window
     root = tk.Tk()
+    root.title(f'TkTetris {VERSION}')
 
     # Load resources
     resources_path = os.path.join(os.path.realpath(__file__), '../../res/ClassicMonochrome')
