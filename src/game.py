@@ -10,7 +10,7 @@ import field
 import figures as f
 import keyboard_handler as kbh
 
-TICK_INTERVAL = 0.6
+TICK_INTERVAL = 0.5
 
 
 class BusyWarning(Exception):
@@ -40,7 +40,8 @@ class Game:
         self._keyboard_handler = keyboard_handler
         self._keyboard_handler.move_left_func = self.move_left
         self._keyboard_handler.move_right_func = self.move_right
-        self._keyboard_handler.force_down_func = self.move_down  # TODO: replace to force down when ready
+        self._keyboard_handler.force_down_func = self.force_down
+        self._keyboard_handler.force_down_cancel_func = self.force_down_cancel
         self._keyboard_handler.rotate_func = self.rotate
         self._keyboard_handler.pause_func = self.pause
 
@@ -157,7 +158,10 @@ class Game:
         return self._move(y_diff=1)
 
     def force_down(self):
-        pass
+        self.tick_thread.set_tick(TICK_INTERVAL / 10)
+
+    def force_down_cancel(self):
+        self.tick_thread.set_tick(TICK_INTERVAL)
 
     def pause(self):
         self.paused = not self.paused

@@ -32,6 +32,7 @@ class KeyboardHandler:
         self.move_left_func = None
         self.move_right_func = None
         self.force_down_func = None
+        self.force_down_cancel_func = None
         self.rotate_func = None
         self.pause_func = None
 
@@ -55,6 +56,9 @@ class KeyboardHandler:
         kp.is_pressed = False
         kp.press_time = None
         kp.has_been_processed_once = False
+
+        if event.keycode == FORCE_DOWN:
+            self.force_down_cancel_func()
 
     def _process_pressed_keys(self):
         # Make a decision what should we do with this key
