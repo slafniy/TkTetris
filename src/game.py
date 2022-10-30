@@ -9,6 +9,7 @@ import custom_threads
 import field
 import figures as f
 import keyboard_handler as kbh
+from abstract_ui import AbstractUI
 
 TICK_INTERVAL = 0.5
 
@@ -23,16 +24,12 @@ class Game:
     Contains information about game field
     """
 
-    def __init__(self, *, width, height, paint_filled, paint_falling, paint_next, delete_image, toggle_pause,
-                 refresh_ui, game_over_event: threading.Event, game_over_ui, keyboard_handler: kbh.KeyboardHandler):
+    def __init__(self, *, width, height, game_over_event: threading.Event,
+                 keyboard_handler: kbh.KeyboardHandler, ui_root: AbstractUI):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
         :param height: How many cells one vertical column contains
-        :param paint_filled: Function that paints filled cell on UI
-        :param paint_falling: Function that paints falling cell on UI
-        :param delete_image: Function that deletes image via ID
-        :param toggle_pause: Function that shows/hides PAUSE text
         :param game_over_event: Event that indicates that game is over
         """
 
@@ -45,27 +42,13 @@ class Game:
         self._keyboard_handler.rotate_func = self.rotate
         self._keyboard_handler.pause_func = self.pause
 
-        # Functions to draw and remove cells
-        # TODO: write interface for this
-        assert callable(paint_filled)
-        assert callable(paint_falling)
-        assert callable(paint_next)
-        assert callable(delete_image)
-        assert callable(toggle_pause)
-        assert callable(game_over_ui)
-        self._paint_ui_filled = paint_filled
-        self._paint_ui_falling = paint_falling
-        self._paint_ui_next = paint_next
-        self._delete_ui_image = delete_image
-        self._toggle_pause = toggle_pause
-        self._refresh_ui = refresh_ui
-        self._game_over_ui = game_over_ui
+        self._ui_root = ui_root
 
         self._field = field.Field(height, width)  # An internal structure to store field state (two-dimensional list)
         self.game_over_event = game_over_event
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
-        self._paint_ui_next(self._next_figure.current_matrix())
+        self._ui_root.show_next_figure(self._next_figure.current_matrix())
 
         self.paused = False
 
@@ -80,18 +63,18 @@ class Game:
         cell = self._field.set_cell_state(point, state)
         # Remove existing image
         if cell.image_id is not None:
-            self._delete_ui_image(cell.image_id)
+            self._ui_root.delete_image(cell.image_id)
         # Paint new image if needed
         if state == c.CellState.FILLED:
-            cell.image_id = self._paint_ui_filled(point.x, point.y)
+            cell.image_id = self._ui_root.paint_falling(point.x, point.y)
         elif state == c.CellState.FALLING:
-            cell.image_id = self._paint_ui_falling(point.x, point.y)
+            cell.image_id = self._ui_root.paint_falling(point.x, point.y)
 
     def _fix_figure(self):
         print("Fixing figure")
         for point in self._figure.current_points:
             self._set_cell_state(point, c.CellState.FILLED)
-        self._refresh_ui()
+        self._ui_root.refresh_ui()
         self._figure = None
 
     def _spawn_figure(self):
@@ -102,11 +85,11 @@ class Game:
         if not self.game_over_event.is_set() and self._figure is None:
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
-            self._paint_ui_next(self._next_figure.current_matrix())
+            self._ui_root.show_next_figure(self._next_figure.current_matrix())
             can_place = self._place(f.Point(4, 0))
             if can_place is False:
                 self.game_over_event.set()
-                self._game_over_ui()
+                self._ui_root.game_over()
                 print('Cannot place new figure - game over')
             return can_place
 
@@ -135,7 +118,7 @@ class Game:
                 self._set_cell_state(f.Point(x, y), c.CellState.FALLING)
 
             self._figure.position = point
-            self._refresh_ui()
+            self._ui_root.refresh_ui()
             # print("Figure placed to {}".format(point))
             return True
         finally:
@@ -170,7 +153,7 @@ class Game:
 
     def pause(self):
         self.paused = not self.paused
-        self._toggle_pause()
+        self._ui_root.toggle_pause()
 
     def rotate(self):
         if self.paused:
@@ -217,7 +200,7 @@ class Game:
 
             for x, y in cells_to_destroy:
                 self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
-            self._refresh_ui()
+            self._ui_root.refresh_ui()
             time.sleep(TICK_INTERVAL / 2)
 
             for x, y in cells_to_move_down:
@@ -225,4 +208,4 @@ class Game:
             for x, y in cells_to_move_down:
                 self._set_cell_state(f.Point(x, y + 1), c.CellState.FILLED)
             time.sleep(TICK_INTERVAL / 2)
-            self._refresh_ui()
+            self._ui_root.refresh_ui()

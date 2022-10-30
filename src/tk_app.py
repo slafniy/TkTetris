@@ -6,6 +6,7 @@ import typing as t
 import figures
 import keyboard_handler
 import game
+import abstract_ui
 
 VERSION = '1.0d'
 
@@ -18,7 +19,7 @@ FIELD_WIDTH = 10  # In cells
 COLOR_BACKGROUND = "#FF00FF"
 
 
-class TkTetrisUI(tk.Tk):
+class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     """
     Main window class
     """
@@ -62,6 +63,19 @@ class TkTetrisUI(tk.Tk):
         self._game_score = tk.Label(master=self, text="Score: 0")
         self._game_score.grid(column=1, row=1, sticky=tk.N)
 
+    def show_next_figure(self, points: t.List[figures.Point]):
+        self._next_figure_field.create_image(0, 0, anchor=tk.NW, image=self._background_image)  # clear all previous
+        for x, y in points:
+            _x = x * CELL_SIZE + 2
+            _y = y * CELL_SIZE + 2
+            self._next_figure_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
+
+    def refresh_ui(self):
+        self.ui_field.update()
+
+    def delete_image(self, img_id):
+        self.ui_field.delete(img_id)
+
     def paint_filled(self, x, y):
         _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
         _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
@@ -71,13 +85,6 @@ class TkTetrisUI(tk.Tk):
         _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
         _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
         return self.ui_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
-
-    def paint_next(self, points: t.List[figures.Point]):
-        self._next_figure_field.create_image(0, 0, anchor=tk.NW, image=self._background_image)  # clear all previous
-        for x, y in points:
-            _x = x * CELL_SIZE + 2
-            _y = y * CELL_SIZE + 2
-            self._next_figure_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
 
     def game_over(self):
         self.ui_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
@@ -95,34 +102,31 @@ class TkTetrisUI(tk.Tk):
 
 
 def main():
-    # Create root UI thread and main window
-    root = TkTetrisUI()
+    """
+    Connects UI and game logic
+    """
+
+    ui_root = TkTetrisUI()
 
     game_over_event = threading.Event()
 
     # Bind keyboard listener
     key_handler = keyboard_handler.KeyboardHandler(game_over_event)
-    root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
-    root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
+    ui_root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
+    ui_root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
     def on_close():
-        root.destroy()
+        ui_root.destroy()
 
-    root.protocol("WM_DELETE_WINDOW", on_close)
+    ui_root.protocol("WM_DELETE_WINDOW", on_close)
 
     # Game field binds UI and logic together
     game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-              paint_filled=root.paint_filled,
-              paint_falling=root.paint_falling,
-              paint_next=root.paint_next,
-              delete_image=root.ui_field.delete,
-              toggle_pause=root.toggle_pause,
-              refresh_ui=root.ui_field.update,
               game_over_event=game_over_event,
-              game_over_ui=root.game_over,
-              keyboard_handler=key_handler)
+              keyboard_handler=key_handler,
+              ui_root=ui_root)
 
-    root.geometry("+960+500")
+    ui_root.geometry("+960+500")
 
     # Start application
-    root.mainloop()
+    ui_root.mainloop()
