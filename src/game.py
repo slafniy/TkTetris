@@ -114,6 +114,8 @@ class Game:
         self._is_busy = True
         try:
             target_points = set()
+            if self._figure is None:  # TODO: fix. _place() should use lock
+                return False
             for _x, _y in self._figure.current_matrix():
                 x = _x + point[0]
                 y = _y + point[1]

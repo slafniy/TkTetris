@@ -36,13 +36,11 @@ def main():
                          height=FIELD_HEIGHT * CELL_SIZE,
                          width=FIELD_WIDTH * CELL_SIZE)
 
-    ui_field.pause_image_id: int = None  # Create field to control pause TODO: looks terrible. Or not?
+    ui_field.pause_image_id: t.Optional[int] = None  # Create field to control pause TODO: looks terrible. Or not?
 
     ui_field.grid()
     # TODO: get rid of this magic number!
     ui_field.create_image(2, 2, anchor=tk.NW, image=background_image)
-    # game_score = tk.Label(master=root, text="Scores: 0")
-    # game_score.grid(column=1, row=0, sticky=tk.N)
 
     # Create area to show the next figure
     next_figure_field = tk.Canvas(master=root, background=COLOR_BACKGROUND,
@@ -50,6 +48,9 @@ def main():
                                   width=4 * CELL_SIZE)
     next_figure_field.create_image(0, 0, anchor=tk.NW, image=background_image)
     next_figure_field.grid(column=1, row=0, sticky=tk.N)
+    # Add game score
+    game_score = tk.Label(master=root, text="Score: 0")
+    game_score.grid(column=1, row=1, sticky=tk.N)
 
     game_over_event = threading.Event()
 
