@@ -16,7 +16,7 @@ CELL_INTERNAL_BORDER = 4
 FIELD_HEIGHT = 20  # In cells
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
 FIELD_WIDTH = 10  # In cells
-COLOR_BACKGROUND = "#FF00FF"
+COLOR_BACKGROUND = "#000000"
 
 
 class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
@@ -36,7 +36,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._game_over_image = tk.PhotoImage(file=os.path.join(self._resources_path, "game_over.png"))
         self._pause_image = tk.PhotoImage(file=os.path.join(self._resources_path, "pause.png"))
 
-        self.ui_field: t.Optional[tk.Canvas] = None
+        self._game_field: t.Optional[tk.Canvas] = None
         self._next_figure_field: t.Optional[tk.Canvas] = None
         self._pause_image_id: t.Optional[int] = None
         self._game_score: t.Optional[tk.Label] = None
@@ -44,24 +44,24 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self.create_ui()  # Initialize or re-initialize UI from resources
 
     def create_ui(self):
-        # Draw background, draw labels etc.
-        self.ui_field = tk.Canvas(master=self, background=COLOR_BACKGROUND,
-                                  height=FIELD_HEIGHT * CELL_SIZE,
-                                  width=FIELD_WIDTH * CELL_SIZE)
-
-        self.ui_field.grid()
+        """
+        Draw from resources
+        """
+        self._game_field = tk.Canvas(master=self, background=COLOR_BACKGROUND,
+                                     height=FIELD_HEIGHT * CELL_SIZE,
+                                     width=FIELD_WIDTH * CELL_SIZE)
         # TODO: get rid of this magic number!
-        self.ui_field.create_image(2, 2, anchor=tk.NW, image=self._background_image)
-
-        # Create area to show the next figure
+        self._game_field.create_image(2, 2, anchor=tk.NW, image=self._background_image)
         self._next_figure_field = tk.Canvas(master=self, background=COLOR_BACKGROUND,
                                             height=4 * CELL_SIZE,
                                             width=4 * CELL_SIZE)
         self._next_figure_field.create_image(0, 0, anchor=tk.NW, image=self._background_image)
-        self._next_figure_field.grid(column=1, row=0, sticky=tk.N)
-        # Add game score
         self._game_score = tk.Label(master=self, text="Score: 0")
-        self._game_score.grid(column=1, row=1, sticky=tk.N)
+
+        # Place elements on grid
+        self._game_field.grid(column=0, row=0, columnspan=2, rowspan=9)
+        self._next_figure_field.grid(column=2, row=0, sticky=tk.NW)
+        self._game_score.grid(column=2, row=1, sticky=tk.NW)
 
     def show_next_figure(self, points: t.List[figures.Point]):
         self._next_figure_field.create_image(0, 0, anchor=tk.NW, image=self._background_image)  # clear all previous
@@ -71,34 +71,34 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
             self._next_figure_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
 
     def refresh_ui(self):
-        self.ui_field.update()
+        self._game_field.update()
 
     def delete_image(self, img_id):
-        self.ui_field.delete(img_id)
+        self._game_field.delete(img_id)
 
     def paint_filled(self, x, y):
         _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
         _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
-        return self.ui_field.create_image(_x, _y, anchor=tk.NW, image=self._filled_cell_image)
+        return self._game_field.create_image(_x, _y, anchor=tk.NW, image=self._filled_cell_image)
 
     def paint_falling(self, x, y):
         _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
         _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
-        return self.ui_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
+        return self._game_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
 
     def game_over(self):
-        self.ui_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
-                                   FIELD_HEIGHT / 2 * CELL_SIZE,
-                                   anchor=tk.CENTER, image=self._game_over_image)
+        self._game_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
+                                      FIELD_HEIGHT / 2 * CELL_SIZE,
+                                      anchor=tk.CENTER, image=self._game_over_image)
 
     def toggle_pause(self):
-        if self.ui_field.pause_image_id is not None:
-            self.ui_field.delete(self.ui_field.pause_image_id)
-            self.ui_field.pause_image_id = None
+        if self._pause_image_id is not None:
+            self._game_field.delete(self._pause_image_id)
+            self._pause_image_id = None
         else:
-            self.ui_field.pause_image_id = self.ui_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
-                                                                      FIELD_HEIGHT / 2 * CELL_SIZE,
-                                                                      anchor=tk.CENTER, image=self._pause_image)
+            self._pause_image_id = self._game_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
+                                                                 FIELD_HEIGHT / 2 * CELL_SIZE,
+                                                                 anchor=tk.CENTER, image=self._pause_image)
 
 
 def main():
