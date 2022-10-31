@@ -55,6 +55,10 @@ class Game:
         self.tick_thread = custom_threads.TickThread(self._tick, TICK_INTERVAL, game_over_event)
         self.tick_thread.start()
 
+        # Start music
+        self.music = custom_threads.MusicThread(self._ui_root.wav_background)
+        # self.music.start()
+
         # To not allow simultaneous call of place()
         # TODO: this doesn't look smart, remade
         self._is_busy = True
@@ -119,7 +123,6 @@ class Game:
 
             self._figure.position = point
             self._ui_root.refresh_ui()
-            # print("Figure placed to {}".format(point))
             return True
         finally:
             self._is_busy = False
@@ -137,12 +140,15 @@ class Game:
             pass
 
     def move_left(self):
+        self._ui_root.wav_move.play()
         return self._move(x_diff=-1)
 
     def move_right(self):
+        self._ui_root.wav_move.play()
         return self._move(x_diff=1)
 
     def move_down(self):
+        self._ui_root.wav_tick.play()
         return self._move(y_diff=1)
 
     def force_down(self):
@@ -161,6 +167,7 @@ class Game:
         if not self.game_over_event.is_set() and self._figure is not None:
             current_rotation = self._figure.rotation
             self._figure.set_next_rotation()
+            self._ui_root.wav_rotate.play()
             if not self._place(self._figure.position):
                 if not self._place(f.Point(self._figure.position[0] - 1, self._figure.position[1])):
                     if not self._place(f.Point(self._figure.position[0], self._figure.position[1] - 1)):
@@ -182,8 +189,8 @@ class Game:
             # print("Trying to move down current figure")
             can_move = self.move_down()
             if can_move is False:
-                print("Cannot move figure anymore, fixing...")
                 self._fix_figure()
+                self._ui_root.wav_fix.play()
 
     def _clear_rows(self):
         while True:
@@ -201,6 +208,7 @@ class Game:
             for x, y in cells_to_destroy:
                 self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
             self._ui_root.refresh_ui()
+            self._ui_root.wav_row_delete.play()
             time.sleep(TICK_INTERVAL / 2)
 
             for x, y in cells_to_move_down:

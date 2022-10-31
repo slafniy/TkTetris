@@ -1,6 +1,22 @@
 import time
 import threading
 
+import simpleaudio as sa
+
+
+class MusicThread(threading.Thread):
+    """
+    Special thread that endlessly run wav file
+    """
+
+    def __init__(self, wav: sa.WaveObject):
+        super().__init__(daemon=True)
+        self._wav = wav
+
+    def run(self):
+        while True:
+            self._wav.play().wait_done()
+
 
 class TickThread(threading.Thread):
     """

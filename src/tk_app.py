@@ -9,6 +9,7 @@ import figures
 import keyboard_handler
 import game
 import abstract_ui
+from custom_threads import MusicThread
 
 VERSION = '1.0d'
 
@@ -37,9 +38,14 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._background_image = tk.PhotoImage(file=os.path.join(self._resources_path, "background.png"))
         self._game_over_image = tk.PhotoImage(file=os.path.join(self._resources_path, "game_over.png"))
         self._pause_image = tk.PhotoImage(file=os.path.join(self._resources_path, "pause.png"))
+
         # Audio
-        self._background_music = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "back.wav"))
-        self._background_music.play()
+        self._background_music = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "move.wav"))
+        self._move_sound = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "move.wav"))
+        self._rotate_sound = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "rotate.wav"))
+        self._fix_sound = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "fix.wav"))
+        self._row_sound = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "row.wav"))
+        self._tick_sound = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "tick.wav"))
 
         self._game_field: t.Optional[tk.Canvas] = None
         self._next_figure_field: t.Optional[tk.Canvas] = None
@@ -47,6 +53,30 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._game_score: t.Optional[tk.Label] = None
 
         self.create_ui()  # Initialize or re-initialize UI from resources
+
+    @property
+    def wav_move(self) -> sa.WaveObject:
+        return self._move_sound
+
+    @property
+    def wav_rotate(self) -> sa.WaveObject:
+        return self._rotate_sound
+
+    @property
+    def wav_fix(self) -> sa.WaveObject:
+        return self._fix_sound
+
+    @property
+    def wav_row_delete(self) -> sa.WaveObject:
+        return self._row_sound
+
+    @property
+    def wav_background(self) -> sa.WaveObject:
+        return self._background_music
+
+    @property
+    def wav_tick(self) -> sa.WaveObject:
+        return self._tick_sound
 
     def create_ui(self):
         """
