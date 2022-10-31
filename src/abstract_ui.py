@@ -1,9 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-import simpleaudio as sa
-
 import figures
+from resources import SoundResources
 
 
 class AbstractUI(ABC):
@@ -59,48 +58,8 @@ class AbstractUI(ABC):
 
     @property
     @abstractmethod
-    def wav_background(self) -> sa.WaveObject:
+    def sounds(self) -> SoundResources:
         """
-        Background music
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def wav_move(self) -> sa.WaveObject:
-        """
-        Sound for figure move
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def wav_rotate(self) -> sa.WaveObject:
-        """
-        Sound for figure rotates
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def wav_fix(self) -> sa.WaveObject:
-        """
-        Sound when figure fixes
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def wav_row_delete(self) -> sa.WaveObject:
-        """
-        Sound when row removed
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def wav_tick(self) -> sa.WaveObject:
-        """
-        Sound when figure falls one cell down
+        Returns dataclass with game sounds
         """
         pass
