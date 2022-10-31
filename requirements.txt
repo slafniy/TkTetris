@@ -1,1 +1,2 @@
-pyinstaller>=3.4
+pyinstaller==5.5
+simpleaudio==1.0.4

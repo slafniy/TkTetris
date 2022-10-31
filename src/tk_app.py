@@ -3,6 +3,8 @@ import threading
 import tkinter as tk
 import typing as t
 
+import simpleaudio as sa
+
 import figures
 import keyboard_handler
 import game
@@ -28,13 +30,16 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         super(TkTetrisUI, self).__init__()
         self.title(f'TkTetris {VERSION}')
 
-        # Load resources
+        # Load resources - graphics
         self._resources_path = os.path.join(os.path.realpath(__file__), '../../res/ClassicMonochrome')
         self._filled_cell_image = tk.PhotoImage(file=os.path.join(self._resources_path, "cell_filled.png"))
         self._falling_cell_image = tk.PhotoImage(file=os.path.join(self._resources_path, "cell_falling.png"))
         self._background_image = tk.PhotoImage(file=os.path.join(self._resources_path, "background.png"))
         self._game_over_image = tk.PhotoImage(file=os.path.join(self._resources_path, "game_over.png"))
         self._pause_image = tk.PhotoImage(file=os.path.join(self._resources_path, "pause.png"))
+        # Audio
+        self._background_music = sa.WaveObject.from_wave_file(os.path.join(self._resources_path, "back.wav"))
+        self._background_music.play()
 
         self._game_field: t.Optional[tk.Canvas] = None
         self._next_figure_field: t.Optional[tk.Canvas] = None
