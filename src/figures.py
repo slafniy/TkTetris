@@ -82,7 +82,7 @@ class IFigure(Figure):
     def __init__(self):
         print("Creating I-figure...")
         super().__init__()
-        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(0, 0), (0, 1), (0, 2), (0, 3)}
+        self[Rotation.NORTH] = self[Rotation.SOUTH] = {(1, 0), (1, 1), (1, 2), (1, 3)}
         self[Rotation.EAST] = self[Rotation.WEST] = {(0, 3), (1, 3), (2, 3), (3, 3)}
 
 
