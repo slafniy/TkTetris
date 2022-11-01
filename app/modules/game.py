@@ -7,7 +7,7 @@ from . import cell as c
 from . import custom_threads
 from . import field
 from . import figures as f
-from . import keyboard_handler as kbh
+from . import controls_handler as ch
 from . abstract_ui import AbstractUI
 
 TICK_INTERVAL = 0.5
@@ -29,22 +29,23 @@ class Game:
     """
 
     def __init__(self, *, width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-                 keyboard_handler: kbh.KeyboardHandler, ui_root: AbstractUI):
+                 controls_handler: ch.ControlsHandler, ui_root: AbstractUI):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
         :param height: How many cells one vertical column contains
-        :param game_over_event: Event that indicates that game is over
         """
 
-        # Bind keyboard handler to Field methods
-        self._keyboard_handler = keyboard_handler
-        self._keyboard_handler.move_left_func = self.move_left
-        self._keyboard_handler.move_right_func = self.move_right
-        self._keyboard_handler.force_down_func = self.force_down
-        self._keyboard_handler.force_down_cancel_func = self.force_down_cancel
-        self._keyboard_handler.rotate_func = self.rotate
-        self._keyboard_handler.pause_func = self.pause
+        # Bind controls handler to Field methods
+        self._controls_handler = controls_handler
+        self._controls_handler.move_left_func = self._move_left
+        self._controls_handler.move_right_func = self._move_right
+        self._controls_handler.force_down_func = self._force_down
+        self._controls_handler.force_down_cancel_func = self._force_down_cancel
+        self._controls_handler.rotate_func = self._rotate
+        self._controls_handler.pause_func = self._pause
+        self._controls_handler.new_game_func = self._new_game
+        self._controls_handler.skin_change_func = self._repaint_all
 
         self._ui_root = ui_root
 
@@ -65,17 +66,32 @@ class Game:
         self._is_busy = True
         self._game_over = False
 
+    def _new_game(self):
+        self._repaint_all()
+
+    def _repaint_all(self):
+        self._pause()
+        self._ui_root.show_next_figure(self._next_figure.current_matrix())
+        for x, row in enumerate(self._field):
+            for y, cell in enumerate(row):
+                self._paint_cell(f.Point(x, y), cell)
+        self._ui_root.refresh_ui()
+        self._pause()
+
     def _set_cell_state(self, point: f.Point, state: c.CellState):
         cell = self._field.set_cell_state(point, state)
+        self._paint_cell(point, cell)
+
+    def _paint_cell(self, point: f.Point, cell: c.Cell):
         # Remove existing image
         if cell.image_id is not None:
             self._ui_root.delete_image(cell.image_id)
         # Paint new image if needed
         if point.y < FIELD_HIDDEN_TOP_ROWS_NUMBER:
             return  # Don't show cells on hidden rows
-        if state == c.CellState.FILLED:
+        if cell.state == c.CellState.FILLED:
             cell.image_id = self._ui_root.paint_filled(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
-        elif state == c.CellState.FALLING:
+        elif cell.state == c.CellState.FALLING:
             cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
 
     def _fix_figure(self):
@@ -144,29 +160,29 @@ class Game:
         except BusyWarning:
             pass
 
-    def move_left(self):
+    def _move_left(self):
         self._ui_root.sounds.move.play()
         return self._move(x_diff=-1)
 
-    def move_right(self):
+    def _move_right(self):
         self._ui_root.sounds.move.play()
         return self._move(x_diff=1)
 
-    def move_down(self):
+    def _move_down(self):
         self._ui_root.sounds.tick.play()
         return self._move(y_diff=1)
 
-    def force_down(self):
+    def _force_down(self):
         self.tick_thread.set_tick(TICK_INTERVAL / 10)
 
-    def force_down_cancel(self):
+    def _force_down_cancel(self):
         self.tick_thread.set_tick(TICK_INTERVAL)
 
-    def pause(self):
+    def _pause(self):
         self.paused = not self.paused
         self._ui_root.toggle_pause()
 
-    def rotate(self):
+    def _rotate(self):
         if self.paused:
             return
         if not self._game_over and self._figure is not None:
@@ -192,7 +208,7 @@ class Game:
             self._spawn_figure()
         else:
             # print("Trying to move down current figure")
-            can_move = self.move_down()
+            can_move = self._move_down()
             if can_move is False:
                 self._fix_figure()
                 self._ui_root.sounds.fix_figure.play()

@@ -10,6 +10,7 @@ MOVE_RIGHT = 39  # Right arrow
 ROTATE = 38  # Up arrow
 FORCE_DOWN = 40  # Down arrow
 PAUSE = 32  # Space
+NEW_GAME = 13  # Enter
 
 TICK_INTERVAL = 0.08
 TICK_DELAY = 0.2
@@ -22,7 +23,7 @@ class KeyEventParams:
         self.has_been_processed_once: bool = False
 
 
-class KeyboardHandler:
+class ControlsHandler:
     """
     Handles key pressing/release avoiding OS specific timers for key repeat
     """
@@ -35,6 +36,8 @@ class KeyboardHandler:
         self.force_down_cancel_func = None
         self.rotate_func = None
         self.pause_func = None
+        self.new_game_func = None
+        self.skin_change_func = None
 
         # int keycode: (bool is_pressed, float pressed time, bool )
         self._keys_pressed = collections.defaultdict(KeyEventParams)
@@ -84,3 +87,5 @@ class KeyboardHandler:
         if code == PAUSE and callable(self.pause_func):
             # noinspection PyCallingNonCallable
             self.pause_func()
+        if code == NEW_GAME and callable(self.new_game_func):
+            self.new_game_func()

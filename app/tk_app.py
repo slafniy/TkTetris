@@ -1,14 +1,13 @@
-import pathlib
 import tkinter as tk
 import typing as t
 
 import simpleaudio as sa
 import yaml
 
-import modules.figures as figures
-import modules.keyboard_handler as keyboard_handler
-import modules.game as game
 import modules.abstract_ui as abstract_ui
+import modules.figures as figures
+import modules.game as game
+import modules.controls_handler as ch
 from modules.resources import SoundResources, get_resources_path
 
 VERSION = '1.1d'
@@ -21,9 +20,10 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     Main window class
     """
 
-    def __init__(self):
+    def __init__(self, controls_handler: ch.ControlsHandler):
         super(TkTetrisUI, self).__init__()
         self.title(f'TkTetris {VERSION}')
+        self._controls_handler = controls_handler
 
         self._prepare_ui()  # initialize menus and binds
 
@@ -88,6 +88,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._base_canvas.create_image(0, 0, image=self._base_image, anchor=tk.NW)
         self._base_canvas.grid(column=0, row=0, sticky=tk.NW)
         self.geometry(f'{self._base_image.width()}x{self._base_image.height()}')
+
+        if callable(self._controls_handler.skin_change_func):
+            self._controls_handler.skin_change_func()
 
         # Stop any music if any and run new
         [i.stop() for i in self._current_music]
@@ -156,16 +159,16 @@ def main():
     """
     Connects UI and game logic
     """
+    controls_handler = ch.ControlsHandler()
 
-    ui_root = TkTetrisUI()
+    ui_root = TkTetrisUI(controls_handler)
 
     # Bind keyboard listener
-    key_handler = keyboard_handler.KeyboardHandler()
-    ui_root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
-    ui_root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
+    ui_root.bind(sequence='<KeyPress>', func=controls_handler.on_key_press)
+    ui_root.bind(sequence='<KeyRelease>', func=controls_handler.on_key_release)
 
     # Game field binds UI and logic together
-    game.Game(keyboard_handler=key_handler,
+    game.Game(controls_handler=controls_handler,
               ui_root=ui_root)
 
     ui_root.geometry("+800+300")
