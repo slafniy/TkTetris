@@ -43,7 +43,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._game_field_offset_y: t.Optional[int] = None
         self._current_music: t.List[sa.PlayObject] = []
         self._next_figure_image_ids = []
-        self.load_skin('Matrix')  # Initialize or re-initialize UI from resources
+        self.load_skin('Default')  # Initialize or re-initialize UI from resources
 
     @property
     def sounds(self) -> SoundResources:
@@ -150,16 +150,13 @@ def main():
 
     ui_root = TkTetrisUI()
 
-    game_over_event = threading.Event()
-
     # Bind keyboard listener
-    key_handler = keyboard_handler.KeyboardHandler(game_over_event)
+    key_handler = keyboard_handler.KeyboardHandler()
     ui_root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
     ui_root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
 
     # Game field binds UI and logic together
-    game.Game(game_over_event=game_over_event,
-              keyboard_handler=key_handler,
+    game.Game(keyboard_handler=key_handler,
               ui_root=ui_root)
 
     ui_root.geometry("+800+300")

@@ -28,7 +28,7 @@ class KeyboardHandler:
     """
     REPEAT_KEYS = {MOVE_RIGHT, MOVE_LEFT}  # repeat only this, other keys processed once per press
 
-    def __init__(self, game_over_event):
+    def __init__(self):
         self.move_left_func = None
         self.move_right_func = None
         self.force_down_func = None
@@ -39,7 +39,7 @@ class KeyboardHandler:
         # int keycode: (bool is_pressed, float pressed time, bool )
         self._keys_pressed = collections.defaultdict(KeyEventParams)
 
-        self.tick_thread = custom_threads.TickThread(self._process_pressed_keys, TICK_INTERVAL, game_over_event)
+        self.tick_thread = custom_threads.TickThread(self._process_pressed_keys, TICK_INTERVAL)
         self.tick_thread.start()
 
     def on_key_press(self, event):

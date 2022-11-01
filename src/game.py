@@ -1,6 +1,5 @@
 import copy
 import random
-import threading
 import time
 import typing as t
 
@@ -30,7 +29,7 @@ class Game:
     """
 
     def __init__(self, *, width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-                 game_over_event: threading.Event, keyboard_handler: kbh.KeyboardHandler, ui_root: AbstractUI):
+                 keyboard_handler: kbh.KeyboardHandler, ui_root: AbstractUI):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
@@ -50,14 +49,13 @@ class Game:
         self._ui_root = ui_root
 
         self._field = field.Field(height, width)  # An internal structure to store field state (two-dimensional list)
-        self.game_over_event = game_over_event
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
         self._ui_root.show_next_figure(self._next_figure.current_matrix())
 
         self.paused = False
 
-        self.tick_thread = custom_threads.TickThread(self._tick, TICK_INTERVAL, game_over_event)
+        self.tick_thread = custom_threads.TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
         self._ui_root.new_game()
@@ -65,6 +63,7 @@ class Game:
         # To not allow simultaneous call of place()
         # TODO: this doesn't look smart, remade
         self._is_busy = True
+        self._game_over = False
 
     def _set_cell_state(self, point: f.Point, state: c.CellState):
         cell = self._field.set_cell_state(point, state)
@@ -91,13 +90,13 @@ class Game:
         self._clear_rows()
 
         # Spawn new if needed
-        if not self.game_over_event.is_set() and self._figure is None:
+        if not self._game_over and self._figure is None:
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
             self._ui_root.show_next_figure(self._next_figure.current_matrix())
             can_place = self._place(f.Point(4, 0))
             if can_place is False:
-                self.game_over_event.set()
+                self._game_over = True
                 self._ui_root.game_over()
                 self._ui_root.sounds.game_over.play()
                 print('Cannot place new figure - game over')
@@ -170,7 +169,7 @@ class Game:
     def rotate(self):
         if self.paused:
             return
-        if not self.game_over_event.is_set() and self._figure is not None:
+        if not self._game_over and self._figure is not None:
             current_rotation = self._figure.rotation
             self._figure.set_next_rotation()
             self._ui_root.sounds.rotate.play()
@@ -184,7 +183,7 @@ class Game:
         if self.paused:
             # print("Skip tick because of pause")
             return
-        if self.game_over_event.is_set():
+        if self._game_over:
             # print("Skip tick because of game over")
             return
 

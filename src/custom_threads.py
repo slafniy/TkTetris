@@ -23,12 +23,11 @@ class TickThread(threading.Thread):
     Special thread that endlessly run tick_function and can be stopped correctly
     """
 
-    def __init__(self, tick_function, tick_interval_sec, game_over_event, startup_sleep_sec=1):
+    def __init__(self, tick_function, tick_interval_sec, startup_sleep_sec=1):
         super().__init__(target=tick_function, daemon=True)
         self._tick_interval = tick_interval_sec
         self._target = tick_function
         self._stop_event = threading.Event()
-        self._game_over_event = game_over_event
         self._startup_sleep_sec = startup_sleep_sec
 
     def set_tick(self, new_tick_sec):
@@ -39,7 +38,7 @@ class TickThread(threading.Thread):
 
     def run(self):
         time.sleep(self._startup_sleep_sec)
-        while not self._stop_event.is_set() and not self._game_over_event.is_set():
+        while not self._stop_event.is_set():
             start_time = time.time()
             self._target()
             # Using cycle instead of simple sleep to catch possible change of _tick_interval
