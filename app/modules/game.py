@@ -74,26 +74,26 @@ class Game:
         self._ui_root.show_next_figure(self._next_figure.current_matrix())
         for x, row in enumerate(self._field):
             for y, cell in enumerate(row):
-                self._paint_cell(f.Point(x, y), cell)
+                self._paint_cell(x, y, cell)
         self._ui_root.refresh_ui()
         self._pause()
 
     def _set_cell_state_and_paint(self, x: int, y: int, state: c.CellState):
         cell = self._field[x][y]
         cell.state = state
-        self._paint_cell(f.Point(x, y), cell)
+        self._paint_cell(x, y, cell)
 
-    def _paint_cell(self, point: f.Point, cell: c.Cell):
+    def _paint_cell(self, x: int, y: int, cell: c.Cell):
         # Remove existing image
         if cell.image_id is not None:
             self._ui_root.delete_image(cell.image_id)
         # Paint new image if needed
-        if point.y < FIELD_HIDDEN_TOP_ROWS_NUMBER:
+        if y < FIELD_HIDDEN_TOP_ROWS_NUMBER:
             return  # Don't show cells on hidden rows
         if cell.state == c.CellState.FILLED:
-            cell.image_id = self._ui_root.paint_filled(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
+            cell.image_id = self._ui_root.paint_filled(x, y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
         elif cell.state == c.CellState.FALLING:
-            cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
+            cell.image_id = self._ui_root.paint_falling(x, y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
 
     def _fix_figure(self):
         print("Fixing figure")
