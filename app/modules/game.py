@@ -78,10 +78,10 @@ class Game:
         self._ui_root.refresh_ui()
         self._pause()
 
-    def _set_cell_state(self, point: f.Point, state: c.CellState):
-        cell = self._field[point.x][point.y]
+    def _set_cell_state_and_paint(self, x: int, y: int, state: c.CellState):
+        cell = self._field[x][y]
         cell.state = state
-        self._paint_cell(point, cell)
+        self._paint_cell(f.Point(x, y), cell)
 
     def _paint_cell(self, point: f.Point, cell: c.Cell):
         # Remove existing image
@@ -98,7 +98,7 @@ class Game:
     def _fix_figure(self):
         print("Fixing figure")
         for point in self._figure.current_points:
-            self._set_cell_state(point, c.CellState.FILLED)
+            self._set_cell_state_and_paint(point.x, point.y, c.CellState.FILLED)
         self._ui_root.refresh_ui()
         self._figure = None
 
@@ -111,7 +111,7 @@ class Game:
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
             self._ui_root.show_next_figure(self._next_figure.current_matrix())
-            can_place = self._place(f.Point(4, 0))
+            can_place = self._place(FIELD_HIDDEN_TOP_ROWS_NUMBER, 0)
             if can_place is False:
                 self._game_over = True
                 self._ui_root.game_over()
@@ -119,31 +119,31 @@ class Game:
                 print('Cannot place new figure - game over')
             return can_place
 
-    def _place(self, point: f.Point):
+    def _place(self, x: int, y: int):
         self._is_busy = True
         try:
             target_points = set()
             if self._figure is None:  # TODO: fix. _place() should use lock
                 return False
             for _x, _y in self._figure.current_matrix():
-                x = _x + point[0]
-                y = _y + point[1]
-                if not (0 <= x < self._field.width and 0 <= y < self._field.height and
-                        self._field[x][y].state != c.CellState.FILLED):
+                new_x = _x + x
+                new_y = _y + y
+                if not (0 <= new_x < self._field.width and 0 <= new_y < self._field.height and
+                        self._field[new_x][new_y].state != c.CellState.FILLED):
                     # print("Cannot place figure to {}".format(point))
                     return False
-                target_points.add(f.Point(x, y))
+                target_points.add(f.Point(new_x, new_y))
             initial_points = copy.deepcopy(self._figure.current_points)
             draw_points = target_points.difference(initial_points)
             clear_points = initial_points.difference(target_points)
             self._figure.current_points = target_points
 
-            for x, y in clear_points:
-                self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
-            for x, y in draw_points:
-                self._set_cell_state(f.Point(x, y), c.CellState.FALLING)
+            for new_x, new_y in clear_points:
+                self._set_cell_state_and_paint(new_x, new_y, c.CellState.EMPTY)
+            for new_x, new_y in draw_points:
+                self._set_cell_state_and_paint(new_x, new_y, c.CellState.FALLING)
 
-            self._figure.position = point
+            self._figure.position = f.Point(x, y)
             self._ui_root.refresh_ui()
             return True
         finally:
@@ -157,7 +157,7 @@ class Game:
                 raise BusyWarning()
             if self._figure is None or self._figure.position is None:
                 return False
-            return self._place(f.Point(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff))
+            return self._place(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff)
         except BusyWarning:
             pass
 
@@ -190,10 +190,10 @@ class Game:
             current_rotation = self._figure.rotation
             self._figure.set_next_rotation()
             self._ui_root.sounds.rotate.play()
-            if not self._place(self._figure.position):
-                if not self._place(f.Point(self._figure.position[0] - 1, self._figure.position[1])):
-                    if not self._place(f.Point(self._figure.position[0], self._figure.position[1] - 1)):
-                        if not self._place(f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1)):
+            if not self._place(self._figure.position.x, self._figure.position.y):
+                if not self._place(self._figure.position[0] - 1, self._figure.position[1]):
+                    if not self._place(self._figure.position[0], self._figure.position[1] - 1):
+                        if not self._place(self._figure.position[0] - 1, self._figure.position[1] - 1):
                             self._figure.rotation = current_rotation
 
     def _tick(self):
@@ -228,14 +228,14 @@ class Game:
                         cells_to_move_down.append((x, y))
 
             for x, y in cells_to_destroy:
-                self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
+                self._set_cell_state_and_paint(x, y, c.CellState.EMPTY)
             self._ui_root.refresh_ui()
             self._ui_root.sounds.row_delete.play()
             time.sleep(TICK_INTERVAL / 2)
 
             for x, y in cells_to_move_down:
-                self._set_cell_state(f.Point(x, y), c.CellState.EMPTY)
+                self._set_cell_state_and_paint(x, y, c.CellState.EMPTY)
             for x, y in cells_to_move_down:
-                self._set_cell_state(f.Point(x, y + 1), c.CellState.FILLED)
+                self._set_cell_state_and_paint(x, y + 1, c.CellState.FILLED)
             time.sleep(TICK_INTERVAL / 2)
             self._ui_root.refresh_ui()
