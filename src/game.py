@@ -13,6 +13,11 @@ from abstract_ui import AbstractUI
 
 TICK_INTERVAL = 0.5
 
+# Default field parameters
+FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
+FIELD_HEIGHT = 20  # In cells
+FIELD_WIDTH = 10  # In cells
+
 
 class BusyWarning(Exception):
     def __init__(self):
@@ -24,8 +29,8 @@ class Game:
     Contains information about game field
     """
 
-    def __init__(self, *, width, height, game_over_event: threading.Event,
-                 keyboard_handler: kbh.KeyboardHandler, ui_root: AbstractUI):
+    def __init__(self, *, width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
+                 game_over_event: threading.Event, keyboard_handler: kbh.KeyboardHandler, ui_root: AbstractUI):
         """
         Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
@@ -67,10 +72,11 @@ class Game:
         if cell.image_id is not None:
             self._ui_root.delete_image(cell.image_id)
         # Paint new image if needed
+        print(f'Paint {point}')
         if state == c.CellState.FILLED:
-            cell.image_id = self._ui_root.paint_falling(point.x, point.y)
+            cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
         elif state == c.CellState.FALLING:
-            cell.image_id = self._ui_root.paint_falling(point.x, point.y)
+            cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
 
     def _fix_figure(self):
         print("Fixing figure")

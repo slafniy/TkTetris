@@ -3,20 +3,16 @@ import threading
 import tkinter as tk
 import typing as t
 
+import yaml
+
 import figures
 import keyboard_handler
 import game
 import abstract_ui
 from resources import SoundResources
 
-VERSION = '1.0d'
+VERSION = '1.1d'
 
-# Default field parameters
-CELL_SIZE = 24  # In pixels, this is base size for all
-CELL_INTERNAL_BORDER = 4
-FIELD_HEIGHT = 20  # In cells
-FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
-FIELD_WIDTH = 10  # In cells
 COLOR_BACKGROUND = "#000000"
 
 
@@ -29,83 +25,74 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         super(TkTetrisUI, self).__init__()
         self.title(f'TkTetris {VERSION}')
 
-        # Load resources - graphics
-        self._resources_path = os.path.join(os.path.realpath(__file__), '../../res/Default/gfx')
-        self._filled_cell_image = tk.PhotoImage(file=os.path.join(self._resources_path, "cell_filled.png"))
-        self._falling_cell_image = tk.PhotoImage(file=os.path.join(self._resources_path, "cell_falling.png"))
-        self._background_image = tk.PhotoImage(file=os.path.join(self._resources_path, "background.png"))
-        self._game_over_image = tk.PhotoImage(file=os.path.join(self._resources_path, "game_over.png"))
-        self._pause_image = tk.PhotoImage(file=os.path.join(self._resources_path, "pause.png"))
+        self._sounds: t.Optional[SoundResources] = None
 
-        self._sounds = SoundResources()  # Audio
-
-        self._game_field: t.Optional[tk.Canvas] = None
+        self._base_canvas: t.Optional[tk.Canvas] = None
         self._next_figure_field: t.Optional[tk.Canvas] = None
         self._pause_image_id: t.Optional[int] = None
         self._game_score: t.Optional[tk.Label] = None
+        self._cell_image: t.Optional[tk.PhotoImage] = None
+        self._base_image: t.Optional[tk.PhotoImage] = None
 
-        self.create_ui()  # Initialize or re-initialize UI from resources
+        self._cell_size: t.Optional[int] = None
+        self._game_field_offset_x: t.Optional[int] = None
+        self._game_field_offset_y: t.Optional[int] = None
+
+        self.load_skin()  # Initialize or re-initialize UI from resources
 
     @property
     def sounds(self) -> SoundResources:
         return self._sounds
 
-    def create_ui(self):
+    def load_skin(self, skin_name='Default'):
         """
-        Draw from resources
+        Loads gfx and sounds from resources
         """
-        self._game_field = tk.Canvas(master=self, background=COLOR_BACKGROUND,
-                                     height=FIELD_HEIGHT * CELL_SIZE,
-                                     width=FIELD_WIDTH * CELL_SIZE)
-        # TODO: get rid of this magic number!
-        self._game_field.create_image(2, 2, anchor=tk.NW, image=self._background_image)
-        self._next_figure_field = tk.Canvas(master=self, background=COLOR_BACKGROUND,
-                                            height=4 * CELL_SIZE,
-                                            width=4 * CELL_SIZE)
-        self._next_figure_field.create_image(0, 0, anchor=tk.NW, image=self._background_image)
-        self._game_score = tk.Label(master=self, text="Score: 0")
+        self._sounds = SoundResources()  # Audio
 
-        # Place elements on grid
-        self._game_field.grid(column=0, row=0, columnspan=2, rowspan=9)
-        self._next_figure_field.grid(column=2, row=0, sticky=tk.NW)
-        self._game_score.grid(column=2, row=1, sticky=tk.NW)
+        resources_path = os.path.join(os.path.realpath(__file__), f'../../res/{skin_name}/gfx')
+
+        with open(os.path.join(resources_path, "cfg.yaml")) as yaml_file:
+            cfg = yaml.safe_load(yaml_file)
+
+        self._cell_size = cfg['cell_size']
+        self._game_field_offset_x = cfg['game_field_nw']['x']
+        self._game_field_offset_y = cfg['game_field_nw']['y']
+
+        self._cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell.png"))
+        self._base_image = tk.PhotoImage(file=os.path.join(resources_path, "base.png"))
+
+        self._base_canvas = tk.Canvas(master=self,
+                                      width=self._base_image.width(),
+                                      height=self._base_image.height())
+        self._base_canvas.create_image(0, 0, image=self._base_image, anchor=tk.NW)
+        self._base_canvas.pack()
 
     def show_next_figure(self, points: t.List[figures.Point]):
-        self._next_figure_field.create_image(0, 0, anchor=tk.NW, image=self._background_image)  # clear all previous
-        for x, y in points:
-            _x = x * CELL_SIZE + 2
-            _y = y * CELL_SIZE + 2
-            self._next_figure_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
+        pass
 
     def refresh_ui(self):
-        self._game_field.update()
+        self._base_canvas.update()
 
     def delete_image(self, img_id):
-        self._game_field.delete(img_id)
+        self._base_canvas.delete(img_id)
+
+    def _paint_cell(self, x, y, cell_image=None):
+        _x = x * self._cell_size + self._game_field_offset_x
+        _y = y * self._cell_size + self._game_field_offset_y
+        return self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=cell_image or self._cell_image)
 
     def paint_filled(self, x, y):
-        _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
-        _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
-        return self._game_field.create_image(_x, _y, anchor=tk.NW, image=self._filled_cell_image)
+        return self._paint_cell(x, y)
 
     def paint_falling(self, x, y):
-        _x = x * CELL_SIZE + 2  # TODO: get rid of this magic
-        _y = (y - FIELD_HIDDEN_TOP_ROWS_NUMBER) * CELL_SIZE + 2  # TODO: get rid of this magic
-        return self._game_field.create_image(_x, _y, anchor=tk.NW, image=self._falling_cell_image)
+        return self._paint_cell(x, y)
 
     def game_over(self):
-        self._game_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
-                                      FIELD_HEIGHT / 2 * CELL_SIZE,
-                                      anchor=tk.CENTER, image=self._game_over_image)
+        pass
 
     def toggle_pause(self):
-        if self._pause_image_id is not None:
-            self._game_field.delete(self._pause_image_id)
-            self._pause_image_id = None
-        else:
-            self._pause_image_id = self._game_field.create_image(FIELD_WIDTH / 2 * CELL_SIZE,
-                                                                 FIELD_HEIGHT / 2 * CELL_SIZE,
-                                                                 anchor=tk.CENTER, image=self._pause_image)
+        pass
 
 
 def main():
@@ -128,8 +115,7 @@ def main():
     ui_root.protocol("WM_DELETE_WINDOW", on_close)
 
     # Game field binds UI and logic together
-    game.Game(width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-              game_over_event=game_over_event,
+    game.Game(game_over_event=game_over_event,
               keyboard_handler=key_handler,
               ui_root=ui_root)
 

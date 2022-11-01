@@ -1,0 +1,7 @@
+cell_size: 20  # logical size, may not match picture size
+
+# Anchor points on base image
+game_field_nw:
+  x: 102
+  y: 76
+
