@@ -42,9 +42,11 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._next_figure_field_offset_y: t.Optional[int] = None
         self._game_field_offset_y: t.Optional[int] = None
         self._current_music: t.List[sa.PlayObject] = []
-        self._current_skin: tk.StringVar
+        self._current_skin_rb: tk.StringVar  # this is for radiobutton
+        self._loaded_skin: t.Optional[str] = None  # this is to control loading skin if it's already loaded
         self._next_figure_image_ids = []
-        self._load_skin(self._current_skin.get())  # Initialize or re-initialize UI from resources
+
+        self._load_skin()  # paint all stuff now
 
     @property
     def sounds(self) -> SoundResources:
@@ -57,6 +59,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         """
         Loads gfx and sounds from resources
         """
+        if skin_name == self._loaded_skin:
+            return
+
         self._sounds = SoundResources(skin_name)  # Audio
 
         resources_path = os.path.join(os.path.realpath(__file__), f'../../res/{skin_name}/gfx')
@@ -88,6 +93,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         # Stop any music if any and run new
         [i.stop() for i in self._current_music]
         self._current_music.append(self.sounds.startup.play())
+        self._loaded_skin = skin_name
 
     def show_next_figure(self, points: t.List[figures.Point]):
         [self.delete_image(i) for i in self._next_figure_image_ids]
@@ -130,11 +136,11 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         # Add Menu
         popup = tk.Menu(self, tearoff=0)
-        self._current_skin = tk.StringVar(value='Default')
+        self._current_skin_rb = tk.StringVar(value='Default')
         popup.add_radiobutton(label="Default", command=lambda: self._load_skin('Default'),
-                              variable=self._current_skin, value='Default')
+                              variable=self._current_skin_rb, value='Default')
         popup.add_radiobutton(label="Matrix", command=lambda: self._load_skin('Matrix'),
-                              variable=self._current_skin, value='Matrix')
+                              variable=self._current_skin_rb, value='Matrix')
 
         def menu_popup(event):
             # display the popup menu
