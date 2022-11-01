@@ -72,7 +72,8 @@ class Game:
         if cell.image_id is not None:
             self._ui_root.delete_image(cell.image_id)
         # Paint new image if needed
-        print(f'Paint {point}')
+        if point.y < FIELD_HIDDEN_TOP_ROWS_NUMBER:
+            return  # Don't show cells on hidden rows
         if state == c.CellState.FILLED:
             cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
         elif state == c.CellState.FALLING:
