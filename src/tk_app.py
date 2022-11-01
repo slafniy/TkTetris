@@ -35,6 +35,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._base_image: t.Optional[tk.PhotoImage] = None
 
         self._cell_size: t.Optional[int] = None
+        self._cell_anchor_offset_x: t.Optional[int] = None
+        self._cell_anchor_offset_y: t.Optional[int] = None
+
         self._game_field_offset_x: t.Optional[int] = None
         self._game_field_offset_y: t.Optional[int] = None
 
@@ -59,6 +62,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._game_field_offset_x = cfg['game_field_nw']['x']
         self._game_field_offset_y = cfg['game_field_nw']['y']
 
+        self._cell_anchor_offset_x = cfg['cell_anchor_nw']['x']
+        self._cell_anchor_offset_y = cfg['cell_anchor_nw']['y']
+
         self._cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell.png"))
         self._base_image = tk.PhotoImage(file=os.path.join(resources_path, "base.png"))
 
@@ -78,8 +84,8 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._base_canvas.delete(img_id)
 
     def _paint_cell(self, x, y, cell_image=None):
-        _x = x * self._cell_size + self._game_field_offset_x
-        _y = y * self._cell_size + self._game_field_offset_y
+        _x = x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
+        _y = y * self._cell_size + self._game_field_offset_y - self._cell_anchor_offset_y
         return self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=cell_image or self._cell_image)
 
     def paint_filled(self, x, y):
