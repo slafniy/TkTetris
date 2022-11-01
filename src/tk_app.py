@@ -132,7 +132,7 @@ def main():
               keyboard_handler=key_handler,
               ui_root=ui_root)
 
-    ui_root.geometry("+960+500")
+    ui_root.geometry("+800+300")
 
     # Start application
     ui_root.mainloop()
