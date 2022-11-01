@@ -2,7 +2,7 @@ import collections
 import time
 import typing as t
 
-import custom_threads
+from . import custom_threads
 
 # Default key binds
 MOVE_LEFT = 37  # Left arrow

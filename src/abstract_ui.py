@@ -1,8 +1,8 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-import figures
-from resources import SoundResources
+from . import figures
+from . resources import SoundResources
 
 
 class AbstractUI(ABC):

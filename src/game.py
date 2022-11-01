@@ -3,12 +3,12 @@ import random
 import time
 import typing as t
 
-import cell as c
-import custom_threads
-import field
-import figures as f
-import keyboard_handler as kbh
-from abstract_ui import AbstractUI
+from . import cell as c
+from . import custom_threads
+from . import field
+from . import figures as f
+from . import keyboard_handler as kbh
+from . abstract_ui import AbstractUI
 
 TICK_INTERVAL = 0.5
 

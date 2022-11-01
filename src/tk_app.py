@@ -1,16 +1,15 @@
 import os
-import threading
 import tkinter as tk
 import typing as t
 
 import simpleaudio as sa
 import yaml
 
-import figures
-import keyboard_handler
-import game
-import abstract_ui
-from resources import SoundResources
+from . import figures
+from . import keyboard_handler
+from . import game
+from . import abstract_ui
+from . resources import SoundResources
 
 VERSION = '1.1d'
 
