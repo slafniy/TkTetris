@@ -1,5 +1,6 @@
 import typing as t
 
+from . logger import logger
 from . import figures as f
 from . import cell as c
 
@@ -9,7 +10,7 @@ class Field(t.List[t.List[c.Cell]]):
     Game field
     """
 
-    def __init__(self, height: int, width: int):
+    def __init__(self, width: int, height: int):
         super().__init__([[c.Cell() for _ in range(height)] for _ in range(width)])
         self.width = width
         self.height = height
@@ -17,12 +18,9 @@ class Field(t.List[t.List[c.Cell]]):
     def set_cell_state(self, point: f.Point, state: c.CellState) -> c.Cell:
         assert isinstance(point, f.Point)
         if 0 <= point.x < self.width and 0 <= point.y < self.height:
-            cell = self.get_cell(point)
+            cell = self[point.x][point.y]
             cell.state = state
             return cell
-
-    def get_cell(self, point: f.Point) -> c.Cell:
-        return self[point.x][point.y]
 
     def get_full_row(self) -> t.Optional[int]:
         for y in range(self.height - 1, -1, -1):
@@ -32,6 +30,6 @@ class Field(t.List[t.List[c.Cell]]):
                     is_full = False
                     break
             if is_full:
-                print("Full row:", y)
+                logger.debug(f'Row {y} is full')
                 return y
         return None

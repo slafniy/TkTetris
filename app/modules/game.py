@@ -49,7 +49,7 @@ class Game:
 
         self._ui_root = ui_root
 
-        self._field = field.Field(height, width)  # An internal structure to store field state (two-dimensional list)
+        self._field = field.Field(width, height)  # An internal structure to store field state (two-dimensional list)
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
         self._ui_root.show_next_figure(self._next_figure.current_matrix())
