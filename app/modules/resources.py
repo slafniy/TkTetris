@@ -11,7 +11,7 @@ class SoundResources:
 
     def __init__(self, skin_name='Default'):
         def get_wav(x):
-            wav_path = _get_resources_path() / skin_name / 'sound' / f'{x}.wav'
+            wav_path = get_resources_path() / skin_name / 'sound' / f'{x}.wav'
             if wav_path.exists():
                 return sa.WaveObject.from_wave_file(str(wav_path))
             else:
@@ -26,12 +26,12 @@ class SoundResources:
         self.startup = get_wav('startup')
 
 
-def _get_resources_path() -> pathlib.Path:
+def get_resources_path() -> pathlib.Path:
     """
     Need this for PyInstaller
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = pathlib.Path(sys._MEIPASS)
+        base_path = pathlib.Path(sys._MEIPASS) / 'app'
     else:
         base_path = pathlib.Path(__file__).parent.parent
     return base_path / 'res'

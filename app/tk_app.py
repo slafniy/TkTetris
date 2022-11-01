@@ -1,15 +1,15 @@
-import os
+import pathlib
 import tkinter as tk
 import typing as t
 
 import simpleaudio as sa
 import yaml
 
-from . import figures
-from . import keyboard_handler
-from . import game
-from . import abstract_ui
-from . resources import SoundResources
+import modules.figures as figures
+import modules.keyboard_handler as keyboard_handler
+import modules.game as game
+import modules.abstract_ui as abstract_ui
+from modules.resources import SoundResources, get_resources_path
 
 VERSION = '1.1d'
 
@@ -63,9 +63,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         self._sounds = SoundResources(skin_name)  # Audio
 
-        resources_path = os.path.join(os.path.realpath(__file__), f'../../res/{skin_name}/gfx')
+        gfx_resources_path = get_resources_path() / f'{skin_name}' / 'gfx'
 
-        with open(os.path.join(resources_path, "cfg.yaml")) as yaml_file:
+        with (gfx_resources_path / "cfg.yaml").open() as yaml_file:
             cfg = yaml.safe_load(yaml_file)
 
         self._cell_size = cfg['cell_size']
@@ -78,10 +78,10 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._cell_anchor_offset_x = cfg['cell_anchor_nw']['x']
         self._cell_anchor_offset_y = cfg['cell_anchor_nw']['y']
 
-        self._cell_falling_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falling.png"))
-        self._cell_filled_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_filled.png"))
+        self._cell_falling_image = tk.PhotoImage(file=str(gfx_resources_path / "cell_falling.png"))
+        self._cell_filled_image = tk.PhotoImage(file=str(gfx_resources_path / "cell_filled.png"))
 
-        self._base_image = tk.PhotoImage(file=os.path.join(resources_path, "base.png"))
+        self._base_image = tk.PhotoImage(file=str(gfx_resources_path / "base.png"))
         self._base_canvas = tk.Canvas(master=self,
                                       width=self._base_image.width(),
                                       height=self._base_image.height())
@@ -172,3 +172,7 @@ def main():
 
     # Start application
     ui_root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
