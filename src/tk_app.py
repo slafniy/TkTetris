@@ -42,8 +42,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._next_figure_field_offset_y: t.Optional[int] = None
         self._game_field_offset_y: t.Optional[int] = None
         self._current_music: t.List[sa.PlayObject] = []
+        self._current_skin: tk.StringVar
         self._next_figure_image_ids = []
-        self.load_skin('Default')  # Initialize or re-initialize UI from resources
+        self._load_skin(self._current_skin.get())  # Initialize or re-initialize UI from resources
 
     @property
     def sounds(self) -> SoundResources:
@@ -52,7 +53,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     def new_game(self):
         pass
 
-    def load_skin(self, skin_name='Default'):
+    def _load_skin(self, skin_name='Default'):
         """
         Loads gfx and sounds from resources
         """
@@ -129,8 +130,11 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         # Add Menu
         popup = tk.Menu(self, tearoff=0)
-        popup.add_command(label="Default", command=lambda: self.load_skin('Default'))
-        popup.add_command(label="Matrix", command=lambda: self.load_skin('Matrix'))
+        self._current_skin = tk.StringVar(value='Default')
+        popup.add_radiobutton(label="Default", command=lambda: self._load_skin('Default'),
+                              variable=self._current_skin, value='Default')
+        popup.add_radiobutton(label="Matrix", command=lambda: self._load_skin('Matrix'),
+                              variable=self._current_skin, value='Matrix')
 
         def menu_popup(event):
             # display the popup menu
