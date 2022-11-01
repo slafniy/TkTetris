@@ -43,6 +43,13 @@ class AbstractUI(ABC):
         pass
 
     @abstractmethod
+    def new_game(self):
+        """
+        Actions on new game
+        """
+        pass
+
+    @abstractmethod
     def refresh_ui(self):
         """
         Trigger re-painting event

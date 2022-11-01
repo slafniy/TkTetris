@@ -60,7 +60,7 @@ class Game:
         self.tick_thread = custom_threads.TickThread(self._tick, TICK_INTERVAL, game_over_event)
         self.tick_thread.start()
 
-        self._ui_root.sounds.startup.play()  # Startup music
+        self._ui_root.new_game()
 
         # To not allow simultaneous call of place()
         # TODO: this doesn't look smart, remade
@@ -75,7 +75,7 @@ class Game:
         if point.y < FIELD_HIDDEN_TOP_ROWS_NUMBER:
             return  # Don't show cells on hidden rows
         if state == c.CellState.FILLED:
-            cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
+            cell.image_id = self._ui_root.paint_filled(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
         elif state == c.CellState.FALLING:
             cell.image_id = self._ui_root.paint_falling(point.x, point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
 

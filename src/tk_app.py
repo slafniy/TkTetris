@@ -3,6 +3,7 @@ import threading
 import tkinter as tk
 import typing as t
 
+import simpleaudio as sa
 import yaml
 
 import figures
@@ -25,10 +26,13 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         super(TkTetrisUI, self).__init__()
         self.title(f'TkTetris {VERSION}')
 
+        self._prepare_ui()  # initialize menus and binds
+
         # Skin stuff
         self._sounds: t.Optional[SoundResources] = None
         self._base_canvas: t.Optional[tk.Canvas] = None
-        self._cell_image: t.Optional[tk.PhotoImage] = None
+        self._cell_falling_image: t.Optional[tk.PhotoImage] = None
+        self._cell_filled_image: t.Optional[tk.PhotoImage] = None
         self._base_image: t.Optional[tk.PhotoImage] = None
         self._cell_size: t.Optional[int] = None
         self._cell_anchor_offset_x: t.Optional[int] = None
@@ -37,19 +41,22 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._next_figure_field_offset_x: t.Optional[int] = None
         self._next_figure_field_offset_y: t.Optional[int] = None
         self._game_field_offset_y: t.Optional[int] = None
-        self.load_skin()  # Initialize or re-initialize UI from resources
-
+        self._current_music: t.List[sa.PlayObject] = []
         self._next_figure_image_ids = []
+        self.load_skin('Matrix')  # Initialize or re-initialize UI from resources
 
     @property
     def sounds(self) -> SoundResources:
         return self._sounds
 
+    def new_game(self):
+        pass
+
     def load_skin(self, skin_name='Default'):
         """
         Loads gfx and sounds from resources
         """
-        self._sounds = SoundResources()  # Audio
+        self._sounds = SoundResources(skin_name)  # Audio
 
         resources_path = os.path.join(os.path.realpath(__file__), f'../../res/{skin_name}/gfx')
 
@@ -66,14 +73,20 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._cell_anchor_offset_x = cfg['cell_anchor_nw']['x']
         self._cell_anchor_offset_y = cfg['cell_anchor_nw']['y']
 
-        self._cell_image = tk.PhotoImage(file=os.path.join(resources_path, "cell.png"))
-        self._base_image = tk.PhotoImage(file=os.path.join(resources_path, "base.png"))
+        self._cell_falling_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_falling.png"))
+        self._cell_filled_image = tk.PhotoImage(file=os.path.join(resources_path, "cell_filled.png"))
 
+        self._base_image = tk.PhotoImage(file=os.path.join(resources_path, "base.png"))
         self._base_canvas = tk.Canvas(master=self,
                                       width=self._base_image.width(),
                                       height=self._base_image.height())
         self._base_canvas.create_image(0, 0, image=self._base_image, anchor=tk.NW)
-        self._base_canvas.pack()
+        self._base_canvas.grid(column=0, row=0, sticky=tk.NW)
+        self.geometry(f'{self._base_image.width()}x{self._base_image.height()}')
+
+        # Stop any music if any and run new
+        [i.stop() for i in self._current_music]
+        self._current_music.append(self.sounds.startup.play())
 
     def show_next_figure(self, points: t.List[figures.Point]):
         [self.delete_image(i) for i in self._next_figure_image_ids]
@@ -82,7 +95,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
             _x = x * self._cell_size + self._next_figure_field_offset_x - self._cell_anchor_offset_x
             _y = y * self._cell_size + self._next_figure_field_offset_y - self._cell_anchor_offset_y
             self._next_figure_image_ids.append(
-                self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=self._cell_image))
+                self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=self._cell_falling_image))
 
     def refresh_ui(self):
         self._base_canvas.update()
@@ -90,22 +103,44 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     def delete_image(self, img_id):
         self._base_canvas.delete(img_id)
 
-    def _paint_cell(self, x, y, cell_image=None):
+    def _paint_cell(self, x, y, cell_image):
         _x = x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
         _y = y * self._cell_size + self._game_field_offset_y - self._cell_anchor_offset_y
-        return self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=cell_image or self._cell_image)
+        return self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=cell_image)
 
     def paint_filled(self, x, y):
-        return self._paint_cell(x, y)
+        return self._paint_cell(x, y, self._cell_filled_image)
 
     def paint_falling(self, x, y):
-        return self._paint_cell(x, y)
+        return self._paint_cell(x, y, self._cell_falling_image)
 
     def game_over(self):
         pass
 
     def toggle_pause(self):
         pass
+
+    def _prepare_ui(self):
+
+        def on_close():
+            self.destroy()
+
+        self.protocol("WM_DELETE_WINDOW", on_close)
+
+        # Add Menu
+        popup = tk.Menu(self, tearoff=0)
+        popup.add_command(label="Default", command=lambda: self.load_skin('Default'))
+        popup.add_command(label="Matrix", command=lambda: self.load_skin('Matrix'))
+
+        def menu_popup(event):
+            # display the popup menu
+            try:
+                popup.tk_popup(event.x_root, event.y_root, 0)
+            finally:
+                # Release the grab
+                popup.grab_release()
+
+        self.bind("<Button-3>", menu_popup)
 
 
 def main():
@@ -121,11 +156,6 @@ def main():
     key_handler = keyboard_handler.KeyboardHandler(game_over_event)
     ui_root.bind(sequence='<KeyPress>', func=key_handler.on_key_press)
     ui_root.bind(sequence='<KeyRelease>', func=key_handler.on_key_release)
-
-    def on_close():
-        ui_root.destroy()
-
-    ui_root.protocol("WM_DELETE_WINDOW", on_close)
 
     # Game field binds UI and logic together
     game.Game(game_over_event=game_over_event,
