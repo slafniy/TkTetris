@@ -79,7 +79,8 @@ class Game:
         self._pause()
 
     def _set_cell_state(self, point: f.Point, state: c.CellState):
-        cell = self._field.set_cell_state(point, state)
+        cell = self._field[point.x][point.y]
+        cell.state = state
         self._paint_cell(point, cell)
 
     def _paint_cell(self, point: f.Point, cell: c.Cell):
