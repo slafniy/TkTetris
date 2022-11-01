@@ -8,7 +8,7 @@ from . import custom_threads
 from . import field
 from . import figures as f
 from . import controls_handler as ch
-from . abstract_ui import AbstractUI
+from .abstract_ui import AbstractUI
 
 TICK_INTERVAL = 0.5
 
@@ -122,28 +122,19 @@ class Game:
     def _place(self, x: int, y: int):
         self._is_busy = True
         try:
-            target_points = set()
-            if self._figure is None:  # TODO: fix. _place() should use lock
-                return False
-            for _x, _y in self._figure.current_matrix():
-                new_x = _x + x
-                new_y = _y + y
-                if not (0 <= new_x < self._field.width and 0 <= new_y < self._field.height and
-                        self._field[new_x][new_y].state != c.CellState.FILLED):
-                    # print("Cannot place figure to {}".format(point))
-                    return False
-                target_points.add(f.Point(new_x, new_y))
             initial_points = copy.deepcopy(self._figure.current_points)
+            target_points = self._field.can_place(x, y, self._figure)
+            if target_points is None:
+                return False
+
             draw_points = target_points.difference(initial_points)
             clear_points = initial_points.difference(target_points)
-            self._figure.current_points = target_points
 
             for new_x, new_y in clear_points:
                 self._set_cell_state_and_paint(new_x, new_y, c.CellState.EMPTY)
             for new_x, new_y in draw_points:
                 self._set_cell_state_and_paint(new_x, new_y, c.CellState.FALLING)
 
-            self._figure.position = f.Point(x, y)
             self._ui_root.refresh_ui()
             return True
         finally:
