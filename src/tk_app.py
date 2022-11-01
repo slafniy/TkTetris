@@ -25,23 +25,21 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         super(TkTetrisUI, self).__init__()
         self.title(f'TkTetris {VERSION}')
 
+        # Skin stuff
         self._sounds: t.Optional[SoundResources] = None
-
         self._base_canvas: t.Optional[tk.Canvas] = None
-        self._next_figure_field: t.Optional[tk.Canvas] = None
-        self._pause_image_id: t.Optional[int] = None
-        self._game_score: t.Optional[tk.Label] = None
         self._cell_image: t.Optional[tk.PhotoImage] = None
         self._base_image: t.Optional[tk.PhotoImage] = None
-
         self._cell_size: t.Optional[int] = None
         self._cell_anchor_offset_x: t.Optional[int] = None
         self._cell_anchor_offset_y: t.Optional[int] = None
-
         self._game_field_offset_x: t.Optional[int] = None
+        self._next_figure_field_offset_x: t.Optional[int] = None
+        self._next_figure_field_offset_y: t.Optional[int] = None
         self._game_field_offset_y: t.Optional[int] = None
-
         self.load_skin()  # Initialize or re-initialize UI from resources
+
+        self._next_figure_image_ids = []
 
     @property
     def sounds(self) -> SoundResources:
@@ -62,6 +60,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._game_field_offset_x = cfg['game_field_nw']['x']
         self._game_field_offset_y = cfg['game_field_nw']['y']
 
+        self._next_figure_field_offset_x = cfg['next_figure_field_nw']['x']
+        self._next_figure_field_offset_y = cfg['next_figure_field_nw']['y']
+
         self._cell_anchor_offset_x = cfg['cell_anchor_nw']['x']
         self._cell_anchor_offset_y = cfg['cell_anchor_nw']['y']
 
@@ -75,7 +76,13 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._base_canvas.pack()
 
     def show_next_figure(self, points: t.List[figures.Point]):
-        pass
+        [self.delete_image(i) for i in self._next_figure_image_ids]
+        self._next_figure_image_ids = []
+        for x, y in points:
+            _x = x * self._cell_size + self._next_figure_field_offset_x - self._cell_anchor_offset_x
+            _y = y * self._cell_size + self._next_figure_field_offset_y - self._cell_anchor_offset_y
+            self._next_figure_image_ids.append(
+                self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=self._cell_image))
 
     def refresh_ui(self):
         self._base_canvas.update()

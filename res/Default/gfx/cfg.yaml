@@ -7,4 +7,7 @@ cell_anchor_nw: # offset point on the cell image to allow overlapping or gap bet
 game_field_nw:
   x: 102
   y: 78
+next_figure_field_nw:
+  x: 319
+  y: 205
 
