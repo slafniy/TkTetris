@@ -9,6 +9,7 @@ from . import field
 from . import figures as f
 from . import controls_handler as ch
 from .abstract_ui import AbstractUI
+from .logger import logger
 
 TICK_INTERVAL = 0.5
 
@@ -71,6 +72,7 @@ class Game:
 
     def _repaint_all(self):
         self._pause()
+        logger.debug(f'Field to repaint:\n{self._field}')
         self._ui_root.show_next_figure(self._next_figure.current_matrix())
         for x, row in enumerate(self._field):
             for y, cell in enumerate(row):

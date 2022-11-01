@@ -1,6 +1,6 @@
 import typing as t
 
-from . logger import logger
+from .logger import logger
 from . import cell as c
 from . import figures as f
 
@@ -41,3 +41,12 @@ class Field(t.List[t.List[c.Cell]]):
         figure.position = f.Point(x, y)
         figure.current_points = target_points
         return target_points
+
+    def __str__(self):
+        s = ''
+        for y in range(self.height):
+            for x in range(self.width):
+                st = self[x][y].state
+                s += '[ ]' if st == c.CellState.EMPTY else '[M]' if st == c.CellState.FALLING else '[X]'  # M for moving
+            s += '\n'
+        return s
