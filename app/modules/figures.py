@@ -26,13 +26,16 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
         self.current_points: t.Set[Point] = set()
         self.position = None
         self._rotation_generator = itertools.cycle(Rotation)
-        for i in range(random.randint(1, 4)):
+        for _ in range(random.randint(1, 4)):
             self.rotation = next(self._rotation_generator)
 
     def current_matrix(self) -> t.Set[Point]:
         return self.get(self.rotation, set())
 
     def set_next_rotation(self):
+        """
+        Rotate clockwise
+        """
         self.rotation = next(self._rotation_generator)
 
 

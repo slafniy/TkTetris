@@ -21,7 +21,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     """
 
     def __init__(self, controls_handler: ch.ControlsHandler):
-        super(TkTetrisUI, self).__init__()
+        super().__init__()
         self.title(f'TkTetris {VERSION}')
         self._controls_handler = controls_handler
 

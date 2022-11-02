@@ -20,8 +20,7 @@ FIELD_WIDTH = 10  # In cells
 
 
 class BusyWarning(Exception):
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Game:
