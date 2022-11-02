@@ -20,10 +20,6 @@ FIELD_HEIGHT = 20  # In cells
 FIELD_WIDTH = 10  # In cells
 
 
-class BusyWarning(Exception):
-    pass
-
-
 class Game:
     """
     Contains information about game field
@@ -72,7 +68,7 @@ class Game:
 
     def _repaint_all(self):
         self._pause()
-        logger.debug('Field to repaint: %s', str(self._field))
+        logger.debug('Field to repaint: %s', self._field)
         self._ui_root.show_next_figure(self._next_figure.current_matrix())
         for x, row in enumerate(self._field):
             for y, cell in enumerate(row):
@@ -143,16 +139,11 @@ class Game:
             self._is_busy = False
 
     def _move(self, x_diff=0, y_diff=0):
-        if self.paused:
+        if self.paused or self._is_busy:
             return
-        try:
-            if self._is_busy:
-                raise BusyWarning()
-            if self._figure is None or self._figure.position is None:
-                return False
-            return self._place(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff)
-        except BusyWarning:
-            pass
+        if self._figure is None or self._figure.position is None:
+            return False
+        return self._place(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff)
 
     def _move_left(self):
         self._ui_root.sounds.move.play()
