@@ -23,20 +23,31 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
 
     def __init__(self):
         super().__init__()
-        self.current_points: t.Set[Point] = set()
-        self.position = None
+        self.position: t.Optional[Point] = None  # Stores position on field
         self._rotation_generator = itertools.cycle(Rotation)
         for _ in range(random.randint(1, 4)):
             self.rotation = next(self._rotation_generator)
 
     def current_matrix(self) -> t.Set[Point]:
-        return self.get(self.rotation, set())
+        """Return current rotation matrix"""
+        return {Point(x, y) for x, y in self.get(self.rotation, set())}
 
     def set_next_rotation(self):
         """
         Rotate clockwise
         """
         self.rotation = next(self._rotation_generator)
+
+    def get_points(self, position: t.Optional[Point] = None) -> t.Set[Point]:
+        """
+        Calculate coordinates of each point of the figure for given position
+        :param position: - if None current position will be used for calculations
+        If there's no position returns empty set
+        """
+        position = position or self.position
+        if position is not None:
+            return {Point(point.x + position.x, point.y + position.y) for point in self.current_matrix()}
+        return set()
 
 
 class ZFigure(Figure):
