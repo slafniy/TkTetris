@@ -1,0 +1,16 @@
+cell_size: 24  # logical size, may not match picture size
+cell_anchor_nw: # offset point on the cell image to allow overlapping or gap between cells
+  x: 0
+  y: 0
+
+# Anchor points on base image
+game_field_nw:
+  x: 0
+  y: 0
+next_figure_field_nw:
+  x: 244
+  y: 96
+pause_nw:
+  x: 250
+  y: 400
+
