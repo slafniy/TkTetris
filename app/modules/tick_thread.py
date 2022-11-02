@@ -1,21 +1,6 @@
+"""Custom thread for endless background task"""
 import time
 import threading
-
-import simpleaudio as sa
-
-
-class MusicThread(threading.Thread):
-    """
-    Special thread that endlessly run wav file
-    """
-
-    def __init__(self, wav: sa.WaveObject):
-        super().__init__(daemon=True)
-        self._wav = wav
-
-    def run(self):
-        while True:
-            self._wav.play().wait_done()
 
 
 class TickThread(threading.Thread):
@@ -31,9 +16,14 @@ class TickThread(threading.Thread):
         self._startup_sleep_sec = startup_sleep_sec
 
     def set_tick(self, new_tick_sec):
+        """
+        Adjust target function call frequency
+        :param new_tick_sec: - interval between task function calls
+        """
         self._tick_interval = new_tick_sec
 
     def stop(self):
+        """Conveniently stops thread after next tick"""
         self._stop_event.set()
 
     def run(self):

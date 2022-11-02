@@ -23,7 +23,7 @@ class Field(t.List[t.List[c.Cell]]):
                     is_full = False
                     break
             if is_full:
-                logger.debug(f'Row {y} is full')
+                logger.debug('Row %i is full', y)
                 return y
         return None
 
@@ -43,10 +43,11 @@ class Field(t.List[t.List[c.Cell]]):
         return target_points
 
     def __str__(self):
-        s = ''
+        field_str = '\n'
         for y in range(self.height):
             for x in range(self.width):
                 st = self[x][y].state
-                s += '[ ]' if st == c.CellState.EMPTY else '[M]' if st == c.CellState.FALLING else '[X]'  # M for moving
-            s += '\n'
-        return s
+                # M for moving, X for fiXed
+                field_str += '[ ]' if st == c.CellState.EMPTY else '[M]' if st == c.CellState.FALLING else '[X]'
+            field_str += '\n'
+        return field_str

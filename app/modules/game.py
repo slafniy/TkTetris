@@ -1,10 +1,11 @@
+"""Main place for game logic"""
 import copy
 import random
 import time
 import typing as t
 
 from . import cell as c
-from . import custom_threads
+from .tick_thread import TickThread
 from . import field
 from . import figures as f
 from . import controls_handler as ch
@@ -56,7 +57,7 @@ class Game:
 
         self.paused = False
 
-        self.tick_thread = custom_threads.TickThread(self._tick, TICK_INTERVAL)
+        self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
         self._ui_root.new_game()
@@ -71,7 +72,7 @@ class Game:
 
     def _repaint_all(self):
         self._pause()
-        logger.debug(f'Field to repaint:\n{self._field}')
+        logger.debug('Field to repaint: %s', str(self._field))
         self._ui_root.show_next_figure(self._next_figure.current_matrix())
         for x, row in enumerate(self._field):
             for y, cell in enumerate(row):
@@ -119,6 +120,7 @@ class Game:
                 self._ui_root.sounds.game_over.play()
                 print('Cannot place new figure - game over')
             return can_place
+        return False
 
     def _place(self, x: int, y: int):
         self._is_busy = True
@@ -143,7 +145,7 @@ class Game:
 
     def _move(self, x_diff=0, y_diff=0):
         if self.paused:
-            return
+            return False
         try:
             if self._is_busy:
                 raise BusyWarning()
@@ -151,7 +153,7 @@ class Game:
                 return False
             return self._place(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff)
         except BusyWarning:
-            pass
+            return False
 
     def _move_left(self):
         self._ui_root.sounds.move.play()

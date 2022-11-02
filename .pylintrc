@@ -328,8 +328,8 @@ indent-after-paren=4
 # tab).
 indent-string='    '
 
-# Maximum number of characters on a single line.
-max-line-length=100
+# Maximum number of characters on a single line. Changed to 120 because used to it in PyCharm
+max-line-length=120
 
 # Maximum number of lines in a module.
 max-module-lines=1000

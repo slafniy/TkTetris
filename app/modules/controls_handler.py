@@ -1,8 +1,10 @@
+"""Interface between UI, user and logic"""
 import collections
+import dataclasses
 import time
 import typing as t
 
-from . import custom_threads
+from .tick_thread import TickThread
 
 # Default key binds
 MOVE_LEFT = 37  # Left arrow
@@ -16,11 +18,12 @@ TICK_INTERVAL = 0.08
 TICK_DELAY = 0.2
 
 
+@dataclasses.dataclass
 class KeyEventParams:
-    def __init__(self):
-        self.is_pressed: bool = False
-        self.press_time: t.Optional[float] = None
-        self.has_been_processed_once: bool = False
+    """Stores info about pressed key"""
+    is_pressed: bool = False
+    press_time: t.Optional[float] = None
+    has_been_processed_once: bool = False
 
 
 class ControlsHandler:
@@ -42,7 +45,7 @@ class ControlsHandler:
         # int keycode: (bool is_pressed, float pressed time, bool )
         self._keys_pressed = collections.defaultdict(KeyEventParams)
 
-        self.tick_thread = custom_threads.TickThread(self._process_pressed_keys, TICK_INTERVAL)
+        self.tick_thread = TickThread(self._process_pressed_keys, TICK_INTERVAL)
         self.tick_thread.start()
 
     def on_key_press(self, event):
