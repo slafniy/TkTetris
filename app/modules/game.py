@@ -120,7 +120,6 @@ class Game:
                 self._ui_root.sounds.game_over.play()
                 print('Cannot place new figure - game over')
             return can_place
-        return False
 
     def _place(self, x: int, y: int):
         self._is_busy = True
@@ -145,7 +144,7 @@ class Game:
 
     def _move(self, x_diff=0, y_diff=0):
         if self.paused:
-            return False
+            return
         try:
             if self._is_busy:
                 raise BusyWarning()
@@ -153,7 +152,7 @@ class Game:
                 return False
             return self._place(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff)
         except BusyWarning:
-            return False
+            pass
 
     def _move_left(self):
         self._ui_root.sounds.move.play()
