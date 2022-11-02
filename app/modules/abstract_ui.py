@@ -1,11 +1,13 @@
+"""Description of UI interface"""
 import typing as t
 from abc import ABC, abstractmethod
 
 from . import figures
-from . resources import SoundResources
+from .resources import SoundResources
 
 
 class AbstractUI(ABC):
+    """Interface-like class to describe what abstract UI should have"""
 
     @abstractmethod
     def paint_filled(self, x: int, y: int) -> int:
