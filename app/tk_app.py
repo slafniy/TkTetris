@@ -1,3 +1,4 @@
+import argparse
 import tkinter as tk
 import typing as t
 
@@ -8,6 +9,7 @@ import modules.abstract_ui as abstract_ui
 import modules.figures as figures
 import modules.game as game
 import modules.controls_handler as ch
+from modules.logger import logger
 from modules.resources import SoundResources, get_resources_path
 
 VERSION = '1.1d'
@@ -192,4 +194,11 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log-level', default='WARNING', dest='log_level',
+                        help='Logging level. Example --loglevel=DEBUG, default level - WARNING')
+    args = parser.parse_args()
+
+    logger.setLevel(args.log_level.upper())
+
     main()
