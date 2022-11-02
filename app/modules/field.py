@@ -24,9 +24,8 @@ class Field:
 
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
-        result = self.try_place(f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
-        logger.debug('Move result: %s, field: %s', result, self)
-        return result
+        with self._lock:
+            return self._try_place(f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
 
     def move_left(self):
         """Move current figure one cell left"""
@@ -40,6 +39,22 @@ class Field:
         """Move current one cell down"""
         return self._move(y_diff=1)
 
+    def rotate(self) -> bool:
+        """Rotate current figure clockwise"""
+        with self._lock:
+            current_rotation = self._figure.rotation
+            self._figure.set_next_rotation()
+            if self._try_place(f.Point(self._figure.position.x, self._figure.position.y)):
+                return True
+            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1])):
+                return True
+            if self._try_place(f.Point(self._figure.position[0], self._figure.position[1] - 1)):
+                return True
+            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1)):
+                return True
+            self._figure.rotation = current_rotation
+            return False
+
     def spawn_figure(self):
         """Spawn the new figure"""
         with self._lock:
@@ -48,8 +63,9 @@ class Field:
                     self.set(point.x, point.y, CellState.FILLED)
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
-            result = self.try_place(f.Point(FIELD_HIDDEN_TOP_ROWS_NUMBER, 0))  # if it's False - game over
-            logger.info('Cannot spawn new figure!')
+            result = self._try_place(f.Point(FIELD_HIDDEN_TOP_ROWS_NUMBER, 0))  # if it's False - game over
+            if not result:
+                logger.info('Cannot spawn new figure!')
             return result
 
     def get(self, x: int, y: int) -> CellState:
@@ -78,7 +94,7 @@ class Field:
                     return y
             return None
 
-    def try_place(self, new_position: f.Point) -> bool:
+    def _try_place(self, new_position: f.Point) -> bool:
         with self._lock:
             # Check if we can place figure into new position
             target_points = self._figure.get_points(new_position)
@@ -89,19 +105,26 @@ class Field:
                     return False
 
             # Can place figure, now clear its old points and fill new
-            for point in self._figure.get_points():
-                self.set(point.x, point.y, CellState.EMPTY)
+            points_to_clear = self._figure.get_points()
+            logger.debug('Old points: %s', sorted(points_to_clear))
+            logger.debug('New points: %s', sorted(target_points))
             self._figure.position = new_position
+            for point in points_to_clear:
+                self.set(point.x, point.y, CellState.EMPTY)
             for point in target_points:
                 self.set(point.x, point.y, CellState.FALLING)
+            logger.debug('Field after _try_place: %s', self)
             return True
 
     def __str__(self):
-        field_str = '\n'
+        header = '   ' + ''.join([f' {i} ' for i in range(self.width)]) + '  \n'
+        field_str = '\n' + header
         for y in range(self.height):
+            field_str += f'{y:>2d}-'
             for x in range(self.width):
                 state = self.get(x, y)
                 # M for moving, X for fiXed
-                field_str += '[ ]' if state == CellState.EMPTY else '[M]' if state == CellState.FALLING else '[X]'
-            field_str += '\n'
+                field_str += ' : ' if state == CellState.EMPTY else '[M]' if state == CellState.FALLING else '[X]'
+            field_str += f'-{y:<2d}\n'
+        field_str += header
         return field_str
