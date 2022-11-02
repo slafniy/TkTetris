@@ -40,6 +40,10 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._next_figure_field_offset_x: t.Optional[int] = None
         self._next_figure_field_offset_y: t.Optional[int] = None
         self._game_field_offset_y: t.Optional[int] = None
+        self._pause_image: t.Optional[tk.PhotoImage] = None
+        self._pause_image_offset_x: t.Optional[int] = None
+        self._pause_image_offset_y: t.Optional[int] = None
+        self._pause_image_id: t.Optional[int] = None  # to toggle pause
         self._current_music: t.List[sa.PlayObject] = []
         self._current_skin_rb: tk.StringVar  # this is for radiobutton
         self._loaded_skin: t.Optional[str] = None  # this is to control loading skin if it's already loaded
@@ -80,6 +84,10 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         self._cell_falling_image = tk.PhotoImage(file=str(gfx_resources_path / "cell_falling.png"))
         self._cell_filled_image = tk.PhotoImage(file=str(gfx_resources_path / "cell_filled.png"))
+
+        self._pause_image = tk.PhotoImage(file=str(gfx_resources_path / "pause.png"))
+        self._pause_image_offset_x = cfg['pause_nw']['x']
+        self._pause_image_offset_y = cfg['pause_nw']['y']
 
         self._base_image = tk.PhotoImage(file=str(gfx_resources_path / "base.png"))
         self._base_canvas = tk.Canvas(master=self,
@@ -127,7 +135,13 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         pass
 
     def toggle_pause(self):
-        pass
+        if self._pause_image_id is not None:
+            self.delete_image(self._pause_image_id)
+            self._pause_image_id = None
+        else:
+            self._pause_image_id = self._base_canvas.create_image(self._pause_image_offset_x,
+                                                                  self._pause_image_offset_y,
+                                                                  anchor=tk.NW, image=self._pause_image)
 
     def _prepare_ui(self):
 

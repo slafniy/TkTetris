@@ -10,4 +10,7 @@ game_field_nw:
 next_figure_field_nw:
   x: 340
   y: 219
+pause_nw:
+  x: 377
+  y: 428
 
