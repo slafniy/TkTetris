@@ -138,11 +138,9 @@ class Game:
         finally:
             self._is_busy = False
 
-    def _move(self, x_diff=0, y_diff=0):
-        if self.paused or self._is_busy:
+    def _move(self, x_diff=0, y_diff=0) -> bool:
+        if self.paused or self._is_busy or self._figure is None or self._figure.position is None:
             return
-        if self._figure is None or self._figure.position is None:
-            return False
         return self._place(self._figure.position[0] + x_diff, self._figure.position[1] + y_diff)
 
     def _move_left(self):
