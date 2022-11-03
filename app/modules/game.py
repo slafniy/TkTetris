@@ -12,7 +12,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 1
+TICK_INTERVAL = 0.25
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -151,7 +151,10 @@ class Game:
     def _rotate(self):
         if self.paused or self._game_over:
             return
-        self._field.rotate()
+        rotate_result = self._field.rotate()
+        if len(rotate_result) > 0:
+            self._ui_root.sounds.rotate.play()
+            self._ui_root.apply_field_change(rotate_result)
 
     def _tick(self):
         if self.paused:
@@ -166,7 +169,7 @@ class Game:
             self._ui_root.sounds.tick.play()
             self._ui_root.apply_field_change(move_result)
         else:
-            if not self._field.spawn_figure():
+            if not len(self._field.spawn_figure()) > 0:
                 self._game_over = True
 
     #

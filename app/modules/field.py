@@ -44,7 +44,7 @@ class Field:
         logger.debug('MOVE DOWN')
         return self._move(y_diff=1)
 
-    def rotate(self) -> bool:
+    def rotate(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Rotate current figure clockwise"""
         logger.debug('ROTATE')
         with self._field_lock:
@@ -55,10 +55,8 @@ class Field:
                 changed_points = self._try_place(position, next_rotation=True)
                 if len(changed_points) > 0:
                     self._apply_changes(changed_points)
-                    logger.debug(f'ROTATION SUCCESS {position=}')
-                    return True
-            logger.debug('ROTATION FAILED')
-            return False
+                    return changed_points
+            return OrderedDict()
 
     def spawn_figure(self):
         """Spawn the new figure"""
