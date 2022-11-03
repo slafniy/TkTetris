@@ -22,13 +22,12 @@ FIELD_WIDTH = 10  # In cells
 
 class Game:
     """
-    Contains information about game field
+    Contains information about game logic
     """
 
     def __init__(self, *, width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
                  controls_handler: ch.ControlsHandler, ui_root: AbstractUI):
         """
-        Field constructor. Initializes field matrix, should control the game.
         :param width: How many cells one horizontal row contains
         :param height: How many cells one vertical column contains
         """
@@ -120,8 +119,10 @@ class Game:
     # #     return True
 
     def _move_left(self):
-        self._ui_root.sounds.move.play()
-        return self._field.move_left()
+        has_moved = self._field.move_left()
+        if has_moved:
+            self._ui_root
+            self._ui_root.sounds.move.play()
 
     def _move_right(self):
         self._ui_root.sounds.move.play()

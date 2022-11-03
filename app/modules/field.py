@@ -1,6 +1,7 @@
 import random
 import threading
 import typing as t
+from collections import OrderedDict
 
 from .logger import logger
 from .cell import CellState
@@ -25,7 +26,10 @@ class Field:
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
         with self._field_lock:
-            return self._try_place(f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
+            changed_points = self._try_place(
+                f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
+            self._apply_changes(changed_points)
+            return len(changed_points) > 0
 
     def move_left(self):
         """Move current figure one cell left"""
@@ -44,18 +48,15 @@ class Field:
         """Rotate current figure clockwise"""
         logger.debug('ROTATE')
         with self._field_lock:
-            if self._try_place(self._figure.position, next_rotation=True):
-                logger.debug(f'ROTATION SUCCESS 0 0')
-                return True
-            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1]), next_rotation=True):
-                logger.debug(f'ROTATION SUCCESS -1 0')
-                return True
-            if self._try_place(f.Point(self._figure.position[0], self._figure.position[1] - 1), next_rotation=True):
-                logger.debug(f'ROTATION SUCCESS 0 -1')
-                return True
-            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1), next_rotation=True):
-                logger.debug(f'ROTATION SUCCESS -1 -1')
-                return True
+            for position in self._figure.position,\
+                            (f.Point(self._figure.position[0] - 1, self._figure.position[1])),\
+                            (f.Point(self._figure.position[0], self._figure.position[1] - 1)),\
+                            (f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1)):
+                changed_points = self._try_place(position, next_rotation=True)
+                if len(changed_points) > 0:
+                    self._apply_changes(changed_points)
+                    logger.debug(f'ROTATION SUCCESS {position=}')
+                    return True
             logger.debug('ROTATION FAILED')
             return False
 
@@ -107,7 +108,20 @@ class Field:
                     return False
             return True
 
-    def _try_place(self, new_position: f.Point, next_rotation=False) -> bool:
+    def _apply_changes(self, changed_points: t.OrderedDict[CellState, t.Set[f.Point]]):
+        """Apply a bunch of changes to the field"""
+        with self._field_lock:
+            for cell_state, points in changed_points.items():
+                for point in points:
+                    self.set(point.x, point.y, cell_state)
+            logger.debug('Field after _apply_changes: %s', self)
+
+    def _try_place(self, new_position: f.Point, next_rotation=False) -> t.OrderedDict[CellState, t.Set[f.Point]]:
+        """
+        Trying to place figure into given position.
+        Returns a map which contains field coordinates to be changed and what state each of them should have
+        """
+        result = OrderedDict()
         with self._field_lock:
             # Check if we can place figure into new position
             points_to_clear = self._figure.get_points()
@@ -116,18 +130,16 @@ class Field:
             logger.debug('Tar pts: %s', sorted(target_points))
             if not self._can_place(target_points):
                 logger.debug(f'Cannot place figure to {new_position}{" with next rotation" if next_rotation else ""}')
-                return False
+                return result
 
             # Can place figure, now clear its old points and fill new
             self._figure.position = new_position
             if next_rotation:
                 self._figure.rotate()
-            for point in points_to_clear:
-                self.set(point.x, point.y, CellState.EMPTY)
-            for point in target_points:
-                self.set(point.x, point.y, CellState.FALLING)
-            logger.debug('Field after _try_place: %s', self)
-            return True
+
+            result[CellState.EMPTY] = points_to_clear
+            result[CellState.FALLING] = target_points
+            return result
 
     def __str__(self):
         header = '   ' + ''.join([f' {i} ' for i in range(self.width)]) + '  \n'
