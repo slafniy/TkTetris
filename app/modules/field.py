@@ -61,14 +61,12 @@ class Field:
     def spawn_figure(self):
         """Spawn the new figure"""
         with self._field_lock:
-            if self._figure is not None:
-                for point in self._figure.get_points():
-                    self.set(point.x, point.y, CellState.FILLED)
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
-            result = self._try_place(f.Point(FIELD_HIDDEN_TOP_ROWS_NUMBER, 0))  # if it's False - game over
+            result = self._try_place(f.Point(int(self.width / 2) - 2, 0))  # if it's False - game over
             if not result:
                 logger.info('Cannot spawn new figure!')
+            self._apply_changes(result)
             return result
 
     def get(self, x: int, y: int) -> CellState:
