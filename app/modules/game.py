@@ -12,7 +12,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.5
+TICK_INTERVAL = 0.3
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4

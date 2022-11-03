@@ -18,13 +18,13 @@ class Field:
         self.width = width
         self.height = height
         self._cell_states = [[CellState.EMPTY for _ in range(height)] for _ in range(width)]
-        self._lock = threading.RLock()
+        self._field_lock = threading.RLock()  # block simultaneous changes
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
 
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
-        with self._lock:
+        with self._field_lock:
             return self._try_place(f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
 
     def move_left(self):
@@ -37,27 +37,31 @@ class Field:
 
     def move_down(self):
         """Move current one cell down"""
+        logger.debug('MOVE DOWN')
         return self._move(y_diff=1)
 
     def rotate(self) -> bool:
         """Rotate current figure clockwise"""
-        with self._lock:
-            current_rotation = self._figure.rotation
-            self._figure.set_next_rotation()
-            if self._try_place(f.Point(self._figure.position.x, self._figure.position.y)):
+        logger.debug('ROTATE')
+        with self._field_lock:
+            if self._try_place(self._figure.position, next_rotation=True):
+                logger.debug(f'ROTATION SUCCESS 0 0')
                 return True
-            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1])):
+            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1]), next_rotation=True):
+                logger.debug(f'ROTATION SUCCESS -1 0')
                 return True
-            if self._try_place(f.Point(self._figure.position[0], self._figure.position[1] - 1)):
+            if self._try_place(f.Point(self._figure.position[0], self._figure.position[1] - 1), next_rotation=True):
+                logger.debug(f'ROTATION SUCCESS 0 -1')
                 return True
-            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1)):
+            if self._try_place(f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1), next_rotation=True):
+                logger.debug(f'ROTATION SUCCESS -1 -1')
                 return True
-            self._figure.rotation = current_rotation
+            logger.debug('ROTATION FAILED')
             return False
 
     def spawn_figure(self):
         """Spawn the new figure"""
-        with self._lock:
+        with self._field_lock:
             if self._figure is not None:
                 for point in self._figure.get_points():
                     self.set(point.x, point.y, CellState.FILLED)
@@ -70,19 +74,18 @@ class Field:
 
     def get(self, x: int, y: int) -> CellState:
         """Returns cell by coordinates"""
-        with self._lock:
+        with self._field_lock:
             return self._cell_states[x][y]
 
-    def set(self, x: int, y: int, cell: CellState) -> bool:
+    def set(self, x: int, y: int, cell: CellState):
         """Set cell to coordinates"""
-        with self._lock:
-            if not (0 <= x < self.width and 0 <= y < self.height):
-                return False
+        assert 0 <= x < self.width
+        assert 0 <= y < self.height
+        with self._field_lock:
             self._cell_states[x][y] = cell
-            return True
 
     def get_full_row(self) -> t.Optional[int]:
-        with self._lock:
+        with self._field_lock:
             for y in range(self.height - 1, -1, -1):
                 is_full = True
                 for x in range(self.width):
@@ -94,21 +97,31 @@ class Field:
                     return y
             return None
 
-    def _try_place(self, new_position: f.Point) -> bool:
-        with self._lock:
-            # Check if we can place figure into new position
-            target_points = self._figure.get_points(new_position)
-            for new_x, new_y in target_points:
+    def _can_place(self, points: t.Set[f.Point]) -> bool:
+        """Check if given set of points could be placed on field -
+            it checks if it isn't out of borders and there is no filled cells"""
+        with self._field_lock:
+            for new_x, new_y in points:
                 if not (0 <= new_x < self.width and 0 <= new_y < self.height and
                         self.get(new_x, new_y) != CellState.FILLED):
-                    logger.debug(f'Cannot place figure to {new_position}')
                     return False
+            return True
+
+    def _try_place(self, new_position: f.Point, next_rotation=False) -> bool:
+        with self._field_lock:
+            # Check if we can place figure into new position
+            points_to_clear = self._figure.get_points()
+            logger.debug('Cur pts: %s', sorted(points_to_clear))
+            target_points = self._figure.get_points(new_position, next_rotation)
+            logger.debug('Tar pts: %s', sorted(target_points))
+            if not self._can_place(target_points):
+                logger.debug(f'Cannot place figure to {new_position}{" with next rotation" if next_rotation else ""}')
+                return False
 
             # Can place figure, now clear its old points and fill new
-            points_to_clear = self._figure.get_points()
-            logger.debug('Old points: %s', sorted(points_to_clear))
-            logger.debug('New points: %s', sorted(target_points))
             self._figure.position = new_position
+            if next_rotation:
+                self._figure.rotate()
             for point in points_to_clear:
                 self.set(point.x, point.y, CellState.EMPTY)
             for point in target_points:
@@ -120,11 +133,11 @@ class Field:
         header = '   ' + ''.join([f' {i} ' for i in range(self.width)]) + '  \n'
         field_str = '\n' + header
         for y in range(self.height):
-            field_str += f'{y:>2d}-'
+            field_str += f'{y:>2d}|'
             for x in range(self.width):
                 state = self.get(x, y)
                 # M for moving, X for fiXed
                 field_str += ' : ' if state == CellState.EMPTY else '[M]' if state == CellState.FALLING else '[X]'
-            field_str += f'-{y:<2d}\n'
+            field_str += f'|{y:<2d}\n'
         field_str += header
         return field_str

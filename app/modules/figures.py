@@ -3,6 +3,8 @@ import itertools
 import random
 import typing as t
 
+from .logger import logger
+
 
 class Point(t.NamedTuple):
     x: int
@@ -26,27 +28,32 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
         self.position: t.Optional[Point] = None  # Stores position on field
         self._rotation_generator = itertools.cycle(Rotation)
         for _ in range(random.randint(1, 4)):
-            self.rotation = next(self._rotation_generator)
+            self._rotation = next(self._rotation_generator)
+        self._next_rotation = next(self._rotation_generator)
 
-    def current_matrix(self) -> t.Set[Point]:
-        """Return current rotation matrix"""
-        return {Point(x, y) for x, y in self.get(self.rotation, set())}
+    def _rotation_matrix(self, rotation=None) -> t.Set[Point]:
+        """Return rotation matrix"""
+        return {Point(x, y) for x, y in self.get(rotation if rotation is not None else self._rotation, set())}
 
-    def set_next_rotation(self):
+    def rotate(self):
         """
         Rotate clockwise
         """
-        self.rotation = next(self._rotation_generator)
+        self._rotation = self._next_rotation
+        self._next_rotation = next(self._rotation_generator)
 
-    def get_points(self, position: t.Optional[Point] = None) -> t.Set[Point]:
+    def get_points(self, position: t.Optional[Point] = None, next_rotation=False) -> t.Set[Point]:
         """
         Calculate coordinates of each point of the figure for given position
         :param position: - if None current position will be used for calculations
-        If there's no position returns empty set
+            If there's no position returns empty set
+        :param next_rotation: - if True calculate points like figure is already rotated
         """
         position = position or self.position
+        logger.debug(f'Calc pts for {position=} and {next_rotation=}')
         if position is not None:
-            return {Point(point.x + position.x, point.y + position.y) for point in self.current_matrix()}
+            return {Point(point.x + position.x, point.y + position.y)
+                    for point in self._rotation_matrix(self._next_rotation if next_rotation else None)}
         return set()
 
 
