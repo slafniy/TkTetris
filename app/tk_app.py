@@ -1,4 +1,5 @@
 import argparse
+import threading
 import tkinter as tk
 import typing as t
 
@@ -6,9 +7,11 @@ import simpleaudio as sa
 import yaml
 
 import modules.abstract_ui as abstract_ui
-import modules.figures as figures
 import modules.game as game
 import modules.controls_handler as ch
+
+from modules.cell import CellState
+from modules.figures import Point
 from modules.logger import logger
 from modules.resources import SoundResources, get_resources_path
 
@@ -26,6 +29,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         super().__init__()
         self.title(f'TkTetris {VERSION}')
         self._controls_handler = controls_handler
+
+        # to store ids of painted cell images
+        self._game_field_cells_ids: t.Dict[Point, int] = {}
 
         self._prepare_ui()  # initialize menus and binds
 
@@ -107,7 +113,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._current_music.append(self.sounds.startup.play())
         self._loaded_skin = skin_name
 
-    def show_next_figure(self, points: t.List[figures.Point]):
+    def show_next_figure(self, points: t.List[Point]):
         [self.delete_image(i) for i in self._next_figure_image_ids]
         self._next_figure_image_ids = []
         for x, y in points:
@@ -122,16 +128,28 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     def delete_image(self, img_id):
         self._base_canvas.delete(img_id)
 
-    def _paint_cell(self, x, y, cell_image):
-        _x = x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
-        _y = y * self._cell_size + self._game_field_offset_y - self._cell_anchor_offset_y
-        return self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=cell_image)
+    def _paint_cell(self, point: Point, cell_image: tk.PhotoImage) -> int:
+        x = point.x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
+        y = point.y * self._cell_size + self._game_field_offset_y - self._cell_anchor_offset_y
+        return self._base_canvas.create_image(x, y, anchor=tk.NW, image=cell_image)
 
-    def paint_filled(self, x, y):
-        return self._paint_cell(x, y, self._cell_filled_image)
+    def apply_field_change(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]):
+        for cell_state, points in changed_points.items():
+            if cell_state == CellState.EMPTY:
+                self._remove_cells(points)
+            else:
+                self._paint_cells(points, cell_state)
 
-    def paint_falling(self, x, y):
-        return self._paint_cell(x, y, self._cell_falling_image)
+    def _remove_cells(self, points: t.Set[Point]):
+        for point in points:
+            image_id = self._game_field_cells_ids.pop(point, None)
+            if image_id is not None:
+                self.delete_image(image_id)
+
+    def _paint_cells(self, points: t.Set[Point], state: CellState):
+        cell_image = self._cell_falling_image if state == CellState.FALLING else self._cell_filled_image
+        for point in points:
+            self._game_field_cells_ids[point] = self._paint_cell(point, cell_image)
 
     def game_over(self):
         pass

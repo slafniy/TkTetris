@@ -12,7 +12,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.3
+TICK_INTERVAL = 1
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -119,18 +119,22 @@ class Game:
     # #     return True
 
     def _move_left(self):
-        has_moved = self._field.move_left()
-        if has_moved:
-            self._ui_root
+        move_result = self._field.move_left()
+        if len(move_result) > 0:
             self._ui_root.sounds.move.play()
+            self._ui_root.apply_field_change(move_result)
 
     def _move_right(self):
-        self._ui_root.sounds.move.play()
-        return self._field.move_right()
+        move_result = self._field.move_right()
+        if len(move_result) > 0:
+            self._ui_root.sounds.move.play()
+            self._ui_root.apply_field_change(move_result)
 
     def _move_down(self):
-        self._ui_root.sounds.tick.play()
-        return self._field.move_down()
+        move_result = self._field.move_down()
+        if len(move_result) > 0:
+            self._ui_root.sounds.tick.play()
+            self._ui_root.apply_field_change(move_result)
 
     def _force_down(self):
         pass
@@ -157,8 +161,11 @@ class Game:
             # print("Skip tick because of game over")
             return
 
-        if not self._field.move_down():  # cannot move down, fixing and spawn new one
-            self._ui_root.sounds.fix_figure.play()
+        move_result = self._field.move_down()  # cannot move down, fixing and spawn new one
+        if len(move_result) > 0:
+            self._ui_root.sounds.tick.play()
+            self._ui_root.apply_field_change(move_result)
+        else:
             if not self._field.spawn_figure():
                 self._game_over = True
 

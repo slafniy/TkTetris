@@ -23,13 +23,13 @@ class Field:
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
 
-    def _move(self, x_diff=0, y_diff=0) -> bool:
+    def _move(self, x_diff=0, y_diff=0) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current figure"""
         with self._field_lock:
             changed_points = self._try_place(
                 f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
             self._apply_changes(changed_points)
-            return len(changed_points) > 0
+            return changed_points
 
     def move_left(self):
         """Move current figure one cell left"""
