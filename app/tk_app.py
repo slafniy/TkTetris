@@ -109,7 +109,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         # Stop any music if any and run new
         [i.stop() for i in self._current_music]
-        self._current_music.append(self.sounds.startup.play())
+        # self._current_music.append(self.sounds.startup.play())
         self._loaded_skin = skin_name
 
     def show_next_figure(self, points: t.List[Point]):

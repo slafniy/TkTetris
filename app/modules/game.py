@@ -47,18 +47,38 @@ class Game:
 
         self.paused = False
         self._game_over = False
+        self._forcing_speed = False
 
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
-        self._cell_updater_thread = TickThread(self._poll_event, tick_interval_sec=0.001, startup_sleep_sec=0)
+        self._cell_updater_thread = TickThread(self._poll_next_event, tick_interval_sec=0.001, startup_sleep_sec=0)
         self._cell_updater_thread.start()
 
-    def _poll_event(self):
-        while not self._game_over:
+    def _poll_next_event(self):
+        if not self._game_over:
             event = self._field.events_q.get()
+
+            # Apply changes on the game field
             if event.event_type == FieldEventType.CELL_STATE_CHANGE:
                 self._ui_root.apply_field_change(event.payload)
+
+            # We got full row here
+            elif event.event_type == FieldEventType.ROW_REMOVED:
+                self._ui_root.sounds.row_delete.play()
+                self._current_tick *= LEVEL_MULTIPLIER
+                if not self._forcing_speed:
+                    self.tick_thread.set_tick(self._current_tick)
+
+            # Figure hit the bottom
+            elif event.event_type == FieldEventType.FIGURE_FIXED:
+                pass #self._force_down_cancel()  # to avoid smashing the next one
+
+            # Game over
+            elif event.event_type == FieldEventType.GAME_OVER:
+                self._game_over = True
+                self.tick_thread.stop()
+                self._ui_root.sounds.game_over.play()
 
     def _new_game(self):
         self._repaint_all()
@@ -75,20 +95,22 @@ class Game:
             self._ui_root.sounds.move.play()
 
     def _force_down(self):
+        self._forcing_speed = True
         new_tick = self._calc_force_down_tick(self._current_tick)
         logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
         self.tick_thread.set_tick(new_tick)
 
     def _force_down_cancel(self):
-        self.tick_thread.set_tick(TICK_INTERVAL)
+        self._forcing_speed = False
+        self.tick_thread.set_tick(self._current_tick)
 
     @staticmethod
     @lru_cache
     def _calc_force_down_tick(basic_tick: float) -> float:
         """doesn't go lower than 0.01 sec ()
          - in this case will be equal to tick."""
-        k = 0.045
-        limit = 0.01
+        k = 0.07
+        limit = 0.005
         high_speed_tick = basic_tick * k
         high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
         return high_speed_tick
@@ -107,7 +129,5 @@ class Game:
         if self.paused or self._game_over:
             return
 
-        if not self._field.tick():
-            self._game_over = True
-            self.tick_thread.stop()
+        self._field.tick()
         self._ui_root.sounds.tick.play()

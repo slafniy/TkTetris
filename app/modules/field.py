@@ -16,14 +16,17 @@ FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
 
 class FieldEventType(enum.StrEnum):
     """Possible types of events which could be put in Field.events_q"""
+    GAME_OVER = enum.auto()
     CELL_STATE_CHANGE = enum.auto()
+    ROW_REMOVED = enum.auto()
+    FIGURE_FIXED = enum.auto()
 
 
 @dataclasses.dataclass
 class FieldEvent:
     """Event data"""
     event_type: FieldEventType
-    payload: t.Any
+    payload: t.Any = None
 
 
 class Field:
@@ -95,6 +98,7 @@ class Field:
         result[CellState.EMPTY] = points
         result[CellState.FILLED] = points
         self._apply_changes(result)
+        self.events_q.put(FieldEvent(FieldEventType.FIGURE_FIXED))
 
     def _new_figure(self) -> bool:
         """Spawn the new figure"""
@@ -105,6 +109,7 @@ class Field:
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
             if not self._try_place(f.Point(int(self.width / 2) - 2, 0)):  # if it's False - game over
+                self.events_q.put(FieldEvent(FieldEventType.GAME_OVER))
                 logger.info('Cannot spawn new figure!')
                 return False
             return True
@@ -136,6 +141,7 @@ class Field:
 
         self._apply_changes(OrderedDict({CellState.EMPTY: cells_to_destroy,
                                          CellState.FILLED: cells_to_move_down}))
+        self.events_q.put(FieldEvent(FieldEventType.ROW_REMOVED))
 
     def _get_full_row(self) -> t.Optional[int]:
         with self._field_lock:
