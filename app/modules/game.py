@@ -1,14 +1,8 @@
 """Main place for game logic"""
-import copy
-import random
-import time
-import typing as t
 from functools import lru_cache
 
-from . import cell as c
 from .tick_thread import TickThread
 from . import field
-from . import figures as f
 from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger

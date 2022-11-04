@@ -17,12 +17,6 @@ class AbstractUI(ABC):
         """
 
     @abstractmethod
-    def delete_image(self, img_id: int):
-        """
-        Deletes image from game field via ID
-        """
-
-    @abstractmethod
     def toggle_pause(self):
         """
         Shows/hides PAUSE text

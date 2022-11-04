@@ -1,6 +1,5 @@
 """Game field logic"""
 import random
-import time
 import threading
 import typing as t
 from collections import OrderedDict
