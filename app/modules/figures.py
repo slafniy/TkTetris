@@ -52,7 +52,6 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
         :param next_rotation: - if True calculate points like figure is already rotated
         """
         position = position or self.position
-        logger.debug(f'Calc pts for {position=} and {next_rotation=}')
         if position is not None:
             return {Point(point.x + position.x, point.y + position.y)
                     for point in self._rotation_matrix(self._next_rotation if next_rotation else None)}

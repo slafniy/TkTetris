@@ -3,6 +3,7 @@ import copy
 import random
 import time
 import typing as t
+from functools import lru_cache
 
 from . import cell as c
 from .tick_thread import TickThread
@@ -12,7 +13,8 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.2
+TICK_INTERVAL = 0.8
+LEVEL_MULTIPLIER = 0.9
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -47,21 +49,16 @@ class Game:
 
         self._field = field.Field(width, height)  # An internal structure to store field state (two-dimensional list)
 
-    #     self._ui_root.show_next_figure(self._next_figure.current_matrix())
-    #
-        # self._field.spawn_figure()
+        self._current_tick = TICK_INTERVAL
+
         self.paused = False
         self._game_over = False
-    #
+
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
-        self._cell_updater_thread = TickThread(self._update_cells, tick_interval_sec=TICK_INTERVAL / 2,
-                                               startup_sleep_sec=0)
+        self._cell_updater_thread = TickThread(self._update_cells, tick_interval_sec=0.001, startup_sleep_sec=0)
         self._cell_updater_thread.start()
-    #
-    #     self._ui_root.new_game()
-    #
 
     def _update_cells(self):
         while not self._game_over:
@@ -83,12 +80,23 @@ class Game:
             self._ui_root.sounds.move.play()
 
     def _force_down(self):
-        pass
-        # self.tick_thread.set_tick(TICK_INTERVAL / 10)
+        new_tick = self._calc_force_down_tick(self._current_tick)
+        logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
+        self.tick_thread.set_tick(new_tick)
 
     def _force_down_cancel(self):
-        pass
-        # self.tick_thread.set_tick(TICK_INTERVAL)
+        self.tick_thread.set_tick(TICK_INTERVAL)
+
+    @staticmethod
+    @lru_cache
+    def _calc_force_down_tick(basic_tick: float) -> float:
+        """doesn't go lower than 0.01 sec ()
+         - in this case will be equal to tick."""
+        k = 0.045
+        limit = 0.01
+        high_speed_tick = basic_tick * k
+        high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
+        return high_speed_tick
 
     def _pause(self):
         self.paused = not self.paused
@@ -108,30 +116,3 @@ class Game:
             self._game_over = True
             self.tick_thread.stop()
         self._ui_root.sounds.tick.play()
-
-    #
-    # def _clear_rows(self):
-    #     while True:
-    #         row_index = self._field.get_full_row()
-    #         if row_index is None:
-    #             break
-    #
-    #         cells_to_destroy = [(x, row_index) for x in range(self._field.width)]
-    #         cells_to_move_down = []
-    #         for x in range(self._field.width):
-    #             for y in range(0, row_index):
-    #                 if self._field.get(x, y).state == c.CellState.FILLED:
-    #                     cells_to_move_down.append((x, y))
-    #
-    #         for x, y in cells_to_destroy:
-    #             self._set_cell_state_and_paint(x, y, c.CellState.EMPTY)
-    #         self._ui_root.refresh_ui()
-    #         self._ui_root.sounds.row_delete.play()
-    #         time.sleep(TICK_INTERVAL / 2)
-    #
-    #         for x, y in cells_to_move_down:
-    #             self._set_cell_state_and_paint(x, y, c.CellState.EMPTY)
-    #         for x, y in cells_to_move_down:
-    #             self._set_cell_state_and_paint(x, y + 1, c.CellState.FILLED)
-    #         time.sleep(TICK_INTERVAL / 2)
-    #         self._ui_root.refresh_ui()

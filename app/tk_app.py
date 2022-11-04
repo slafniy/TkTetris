@@ -136,10 +136,8 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     def apply_field_change(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]):
         for cell_state, points in changed_points.items():
             if cell_state == CellState.EMPTY:
-                logger.info(f'GUI REM: {points}')
                 self._remove_cells(points)
             else:
-                logger.info(f'GUI ADD: {points}')
                 self._paint_cells(points, cell_state)
 
     def _remove_cells(self, points: t.Set[Point]):

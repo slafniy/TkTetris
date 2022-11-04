@@ -152,7 +152,6 @@ class Field:
         with self._field_lock:
             for cell_state, points in changed_points.items():
                 graphics_patch = {cell_state: set()}
-                logger.debug(f'FIELD APPLY: {cell_state}: {points}')
                 for point in points:
                     self._set(point.x, point.y, cell_state)
                     # make conversions to hide top cells from graphics - virtually move field up and ignore top rows
@@ -172,7 +171,7 @@ class Field:
             points_to_clear = self._figure.get_points()
             target_points = self._figure.get_points(new_position, next_rotation)
             if not self._can_place(target_points):
-                logger.debug(f'Cannot place figure to {new_position}{" with next rotation" if next_rotation else ""}')
+                # logger.debug(f'Cannot place figure to {new_position}{" with next rotation" if next_rotation else ""}')
                 return False
 
             # Can place figure, now clear its old points and fill new
