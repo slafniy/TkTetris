@@ -20,6 +20,7 @@ class FieldEventType(enum.StrEnum):
     CELL_STATE_CHANGE = enum.auto()
     ROW_REMOVED = enum.auto()
     FIGURE_FIXED = enum.auto()
+    NEW_FIGURE = enum.auto()
 
 
 @dataclasses.dataclass
@@ -79,7 +80,6 @@ class Field:
 
     def rotate(self) -> bool:
         """Rotate current figure clockwise"""
-        logger.debug('ROTATE')
         if self._figure.position is None:
             return False
         with self._field_lock:
@@ -92,7 +92,6 @@ class Field:
             return False
 
     def _fix_figure(self):
-        logger.debug('Fixing current figure')
         result = OrderedDict()
         points = self._figure.get_points()
         result[CellState.EMPTY] = points
@@ -108,6 +107,8 @@ class Field:
 
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
+            self.events_q.put(FieldEvent(FieldEventType.NEW_FIGURE,
+                                         self._next_figure.get_points(position=f.Point(0, 0))))
             if not self._try_place(f.Point(int(self.width / 2) - 2, 0)):  # if it's False - game over
                 self.events_q.put(FieldEvent(FieldEventType.GAME_OVER))
                 logger.info('Cannot spawn new figure!')

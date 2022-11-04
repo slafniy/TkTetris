@@ -52,12 +52,13 @@ class Game:
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
-        self._cell_updater_thread = TickThread(self._poll_next_event, tick_interval_sec=0.001, startup_sleep_sec=0)
+        self._cell_updater_thread = TickThread(self._poll_next_field_event, tick_interval_sec=0.001, startup_sleep_sec=0)
         self._cell_updater_thread.start()
 
-    def _poll_next_event(self):
+    def _poll_next_field_event(self):
         if not self._game_over:
             event = self._field.events_q.get()
+            logger.debug(f'Event received, type={event.event_type}')
 
             # Apply changes on the game field
             if event.event_type == FieldEventType.CELL_STATE_CHANGE:
@@ -80,6 +81,10 @@ class Game:
                 self.tick_thread.stop()
                 self._ui_root.sounds.game_over.play()
 
+            # Next figure known
+            elif event.event_type == FieldEventType.NEW_FIGURE:
+                self._ui_root.show_next_figure(event.payload)
+
     def _new_game(self):
         self._repaint_all()
 
@@ -97,7 +102,6 @@ class Game:
     def _force_down(self):
         self._forcing_speed = True
         new_tick = self._calc_force_down_tick(self._current_tick)
-        logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
         self.tick_thread.set_tick(new_tick)
 
     def _force_down_cancel(self):
