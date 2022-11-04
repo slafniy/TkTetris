@@ -63,7 +63,10 @@ class Field:
             logger.debug('FIXING FIGURE')
             fix_result = self._fix_figure()
             self._apply_changes(fix_result)
-            self._figure = None
+            spawn_result = self.spawn_figure()
+            fix_result.update(spawn_result)
+            if len(spawn_result) == 0:
+                return OrderedDict()  # game over
             return fix_result
 
     def _fix_figure(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
@@ -76,6 +79,8 @@ class Field:
     def rotate(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Rotate current figure clockwise"""
         logger.debug('ROTATE')
+        if self._figure.position is None:
+            return OrderedDict()
         with self._field_lock:
             for position in [self._figure.position,
                              (f.Point(self._figure.position[0] - 1, self._figure.position[1])),
@@ -93,7 +98,7 @@ class Field:
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
             result = self._try_place(f.Point(int(self.width / 2) - 2, 0))  # if it's False - game over
-            if not len(result) > 0:
+            if len(result) == 0:
                 logger.info('Cannot spawn new figure!')
             return result
 
