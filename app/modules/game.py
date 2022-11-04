@@ -51,13 +51,21 @@ class Game:
     #
         # self._field.spawn_figure()
         self.paused = False
+        self._game_over = False
     #
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
+
+        self._cell_updater_thread = TickThread(self._update_cells, tick_interval_sec=0.01, startup_sleep_sec=0)
+        self._cell_updater_thread.start()
     #
     #     self._ui_root.new_game()
     #
-        self._game_over = False
+
+    def _update_cells(self):
+        while not self._game_over:
+            patch = self._field.q.get()
+            self._ui_root.apply_field_change(patch)
 
     def _new_game(self):
         self._repaint_all()
@@ -122,19 +130,16 @@ class Game:
         move_result = self._field.move_left()
         if len(move_result) > 0:
             self._ui_root.sounds.move.play()
-            self._ui_root.apply_field_change(move_result)
 
     def _move_right(self):
         move_result = self._field.move_right()
         if len(move_result) > 0:
             self._ui_root.sounds.move.play()
-            self._ui_root.apply_field_change(move_result)
 
     def _move_down(self):
         move_result = self._field.move_down()
         if len(move_result) > 0:
             self._ui_root.sounds.tick.play()
-            self._ui_root.apply_field_change(move_result)
 
     def _force_down(self):
         pass
@@ -154,7 +159,6 @@ class Game:
         rotate_result = self._field.rotate()
         if len(rotate_result) > 0:
             self._ui_root.sounds.rotate.play()
-            self._ui_root.apply_field_change(rotate_result)
 
     def _tick(self):
         if self.paused or self._game_over:
@@ -165,7 +169,6 @@ class Game:
             self._game_over = True
             self.tick_thread.stop()
         self._ui_root.sounds.tick.play()
-        self._ui_root.apply_field_change(tick_result)
 
     #
     # def _clear_rows(self):

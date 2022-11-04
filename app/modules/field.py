@@ -2,6 +2,7 @@ import random
 import threading
 import typing as t
 from collections import OrderedDict
+from multiprocessing import Queue
 
 from .logger import logger
 from .cell import CellState
@@ -22,6 +23,7 @@ class Field:
         self._field_lock = threading.RLock()  # block simultaneous changes
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
+        self.q: Queue[t.Dict[CellState, t.Set[f.Point]]] = Queue()  # cells events
 
     def _move(self, x_diff=0, y_diff=0) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current figure"""
@@ -140,6 +142,7 @@ class Field:
     def _apply_changes(self, changed_points: t.OrderedDict[CellState, t.Set[f.Point]]):
         """Apply a bunch of changes to the field"""
         with self._field_lock:
+            self.q.put(changed_points)
             for cell_state, points in changed_points.items():
                 for point in points:
                     self.set(point.x, point.y, cell_state)
