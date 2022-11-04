@@ -1,4 +1,6 @@
+"""Game field logic"""
 import random
+import time
 import threading
 import typing as t
 from collections import OrderedDict
@@ -13,7 +15,7 @@ FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
 
 class Field:
     """
-    Game field
+    Game field - provides methods to manipulate figures and queue to monitor changes
     """
 
     def __init__(self, width: int, height: int):
@@ -46,6 +48,8 @@ class Field:
 
     def tick(self) -> bool:
         """What to do on each step"""
+        # Check if there is some row to destroy
+        self._destroy_full_row()
 
         # Spawn figure if needed (on startup)
         if self._figure is None:
@@ -53,17 +57,9 @@ class Field:
 
         # Try to move current fig down
         if not self.move_down():
-            return self._new_figure()
+            return self._new_figure()  # try spawn new figure if we cannot move current
 
         return True
-
-    def _fix_figure(self):
-        logger.debug('Fixing current figure')
-        result = OrderedDict()
-        points = self._figure.get_points()
-        result[CellState.EMPTY] = points
-        result[CellState.FILLED] = points
-        self._apply_changes(result)
 
     def rotate(self) -> bool:
         """Rotate current figure clockwise"""
@@ -78,6 +74,14 @@ class Field:
                 if self._try_place(position, next_rotation=True):
                     return True
             return False
+
+    def _fix_figure(self):
+        logger.debug('Fixing current figure')
+        result = OrderedDict()
+        points = self._figure.get_points()
+        result[CellState.EMPTY] = points
+        result[CellState.FILLED] = points
+        self._apply_changes(result)
 
     def _new_figure(self) -> bool:
         """Spawn the new figure"""
@@ -104,7 +108,32 @@ class Field:
         with self._field_lock:
             self._cell_states[x][y] = cell
 
-    def get_full_row(self) -> t.Optional[int]:
+    def _destroy_full_row(self):
+        row_index = self._get_full_row()
+        if row_index is None:
+            return
+
+        cells_to_destroy = [(x, row_index) for x in range(self.width)]
+        cells_to_move_down = []
+        for x in range(self.width):
+            for y in range(0, row_index):
+                if self._get(x, y) == CellState.FILLED:
+                    cells_to_move_down.append((x, y))
+
+        # for x, y in cells_to_destroy:
+        #     self._set_cell_state_and_paint(x, y, CellState.EMPTY)
+
+        # time.sleep(0.2)
+
+        # for x, y in cells_to_move_down:
+        #     self._set_cell_state_and_paint(x, y, CellState.EMPTY)
+        #
+        # for x, y in cells_to_move_down:
+        #     self._set_cell_state_and_paint(x, y + 1, CellState.FILLED)
+
+        # time.sleep(0.2)
+
+    def _get_full_row(self) -> t.Optional[int]:
         with self._field_lock:
             for y in range(self.height - 1, -1, -1):
                 is_full = True
