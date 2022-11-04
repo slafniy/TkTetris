@@ -124,15 +124,6 @@ class Field:
         self._apply_changes(OrderedDict({CellState.EMPTY: cells_to_destroy,
                                          CellState.FILLED: cells_to_move_down}))
 
-
-        # for x, y in cells_to_move_down:
-        #     self._set_cell_state_and_paint(x, y, CellState.EMPTY)
-        #
-        # for x, y in cells_to_move_down:
-        #     self._set_cell_state_and_paint(x, y + 1, CellState.FILLED)
-
-        # time.sleep(0.2)
-
     def _get_full_row(self) -> t.Optional[int]:
         with self._field_lock:
             for y in range(self.height - 1, -1, -1):
@@ -169,7 +160,7 @@ class Field:
                     if fake_y >= 0:
                         graphics_patch[cell_state].add(f.Point(point.x, fake_y))
                 self.graphic_events_q.put(graphics_patch)
-            logger.debug('Field after _apply_changes: %s', self)
+            # logger.debug('Field after _apply_changes: %s', self)
 
     def _try_place(self, new_position: f.Point, next_rotation=False) -> bool:
         """
@@ -179,9 +170,7 @@ class Field:
         with self._field_lock:
             # Check if we can place figure into new position
             points_to_clear = self._figure.get_points()
-            logger.debug('Cur pts: %s', sorted(points_to_clear))
             target_points = self._figure.get_points(new_position, next_rotation)
-            logger.debug('Tar pts: %s', sorted(target_points))
             if not self._can_place(target_points):
                 logger.debug(f'Cannot place figure to {new_position}{" with next rotation" if next_rotation else ""}')
                 return False
