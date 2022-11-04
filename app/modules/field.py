@@ -46,33 +46,38 @@ class Field:
         """Move current one cell down"""
         return self._move(y_diff=1)
 
-    def tick(self):
+    def tick(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """What to do on each step"""
         if self._game_over:
-            return
+            return OrderedDict()
 
         # Spawn figure if needed (on startup)
         if self._figure is None:
-            self._apply_changes(self.spawn_figure())
-            return  # TODO: maybe shouldn't
+            spawn_result = self.spawn_figure()
+            self._apply_changes(spawn_result)
+            return spawn_result
 
         # Try to move current fig down
-        changed_points = self.move_down()
-        if len(changed_points) > 0:
-            self._apply_changes(changed_points)
-        else:
+        move_result = self.move_down()
+        if len(move_result) > 0:
+            self._apply_changes(move_result)
+            return move_result
+        else:  # if we cannot move - we hit the bottom
             logger.debug('FIXING FIGURE')
-            self._apply_changes(self._fix_figure())
-            changed_points = self.spawn_figure()
-            if len(changed_points) > 0:
-                self._apply_changes(changed_points)
-            else:
+            fix_result = self._fix_figure()
+            self._apply_changes(fix_result)
+            spawn_new_result = self.spawn_figure()
+            self._apply_changes(spawn_new_result)
+
+            if not len(spawn_new_result):
                 self._game_over = True
                 logger.info('GAME OVER')
-                return
 
-        # Check full rows
-        logger.debug('CHECK FULL ROWS')
+            fix_result.update(spawn_new_result)  # TODO: possible information lost?
+            return fix_result
+
+            # Check full rows
+            logger.debug('CHECK FULL ROWS')
 
     def _fix_figure(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         result = OrderedDict()
