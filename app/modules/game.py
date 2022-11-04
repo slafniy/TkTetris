@@ -2,7 +2,7 @@
 from functools import lru_cache
 
 from .tick_thread import TickThread
-from . import field
+from .field import FieldEventType, Field
 from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
@@ -41,7 +41,7 @@ class Game:
 
         self._ui_root = ui_root
 
-        self._field = field.Field(width, height)  # An internal structure to store field state (two-dimensional list)
+        self._field = Field(width, height)  # An internal structure to store field state (two-dimensional list)
 
         self._current_tick = TICK_INTERVAL
 
@@ -51,13 +51,14 @@ class Game:
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
-        self._cell_updater_thread = TickThread(self._update_cells, tick_interval_sec=0.001, startup_sleep_sec=0)
+        self._cell_updater_thread = TickThread(self._poll_event, tick_interval_sec=0.001, startup_sleep_sec=0)
         self._cell_updater_thread.start()
 
-    def _update_cells(self):
+    def _poll_event(self):
         while not self._game_over:
-            patch = self._field.graphic_events_q.get()
-            self._ui_root.apply_field_change(patch)
+            event = self._field.events_q.get()
+            if event.event_type == FieldEventType.CELL_STATE_CHANGE:
+                self._ui_root.apply_field_change(event.payload)
 
     def _new_game(self):
         self._repaint_all()

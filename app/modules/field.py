@@ -1,4 +1,6 @@
 """Game field logic"""
+import dataclasses
+import enum
 import random
 import threading
 import typing as t
@@ -10,6 +12,18 @@ from .cell import CellState
 from . import figures as f
 
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
+
+
+class FieldEventType(enum.StrEnum):
+    """Possible types of events which could be put in Field.events_q"""
+    CELL_STATE_CHANGE = enum.auto()
+
+
+@dataclasses.dataclass
+class FieldEvent:
+    """Event data"""
+    event_type: FieldEventType
+    payload: t.Any
 
 
 class Field:
@@ -24,7 +38,7 @@ class Field:
         self._field_lock = threading.RLock()  # block simultaneous changes
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
-        self.graphic_events_q: Queue[t.Dict[CellState, t.Set[f.Point]]] = Queue()  # cells events
+        self.events_q: "Queue[FieldEvent]" = Queue()  # cells events
 
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
@@ -157,7 +171,7 @@ class Field:
                     fake_y = point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER
                     if fake_y >= 0:
                         graphics_patch[cell_state].add(f.Point(point.x, fake_y))
-                self.graphic_events_q.put(graphics_patch)
+                self.events_q.put(FieldEvent(FieldEventType.CELL_STATE_CHANGE, graphics_patch))
             # logger.debug('Field after _apply_changes: %s', self)
 
     def _try_place(self, new_position: f.Point, next_rotation=False) -> bool:
