@@ -47,7 +47,7 @@ class Field:
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
         with self._field_lock:
-            if self._figure.position is None:  # Figure isn't placed anywhere
+            if self._figure is not None and self._figure.position is None:  # Figure isn't placed anywhere
                 return False
             return self._try_place(f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
 
@@ -109,7 +109,7 @@ class Field:
             self._next_figure = random.choice(f.all_figures)()
             self.events_q.put(FieldEvent(FieldEventType.NEW_FIGURE,
                                          self._next_figure.get_points(position=f.Point(0, 0))))
-            if not self._try_place(f.Point(int(self.width / 2) - 2, 0)):  # if it's False - game over
+            if not self._try_place(f.Point(int(self.width / 2) - 1, 0)):  # if it's False - game over
                 self.events_q.put(FieldEvent(FieldEventType.GAME_OVER))
                 logger.info('Cannot spawn new figure!')
                 return False
@@ -153,7 +153,6 @@ class Field:
                         is_full = False
                         break
                 if is_full:
-                    logger.debug('Row %i is full', y)
                     return y
             return None
 

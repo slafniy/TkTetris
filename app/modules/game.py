@@ -7,7 +7,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.8
+TICK_INTERVAL = 0.68
 LEVEL_MULTIPLIER = 0.9
 
 # Default field parameters
@@ -58,7 +58,7 @@ class Game:
     def _poll_next_field_event(self):
         if not self._game_over:
             event = self._field.events_q.get()
-            logger.debug(f'Event received, type={event.event_type}')
+            # logger.debug(f'Event received, type={event.event_type}')
 
             # Apply changes on the game field
             if event.event_type == FieldEventType.CELL_STATE_CHANGE:
@@ -102,6 +102,7 @@ class Game:
     def _force_down(self):
         self._forcing_speed = True
         new_tick = self._calc_force_down_tick(self._current_tick)
+        logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
         self.tick_thread.set_tick(new_tick)
 
     def _force_down_cancel(self):
@@ -113,10 +114,10 @@ class Game:
     def _calc_force_down_tick(basic_tick: float) -> float:
         """doesn't go lower than 0.01 sec ()
          - in this case will be equal to tick."""
-        k = 0.07
-        limit = 0.005
+        k = 0.15
+        # basic_tick_limit = 0.15
         high_speed_tick = basic_tick * k
-        high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
+        # high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
         return high_speed_tick
 
     def _pause(self):

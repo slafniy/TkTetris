@@ -54,7 +54,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._current_music: t.List[sa.PlayObject] = []
         self._current_skin_rb: tk.StringVar  # this is for radiobutton
         self._loaded_skin: t.Optional[str] = None  # this is to control loading skin if it's already loaded
-        self._next_figure_image_ids = []
+
+        self._next_figure_points: t.Set[Point] = set()  # store to repaint if skin changed
+        self._next_figure_image_ids: t.Set[int] = set()
 
         self._load_skin()  # paint all stuff now
 
@@ -112,13 +114,17 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         # self._current_music.append(self.sounds.startup.play())
         self._loaded_skin = skin_name
 
-    def show_next_figure(self, points: t.List[Point]):
+        # Repaint stuff if any
+        self.show_next_figure(self._next_figure_points)
+
+    def show_next_figure(self, points: t.Set[Point]):
+        self._next_figure_points = points
         [self.delete_image(i) for i in self._next_figure_image_ids]
-        self._next_figure_image_ids = []
+        self._next_figure_image_ids = set()
         for x, y in points:
             _x = x * self._cell_size + self._next_figure_field_offset_x - self._cell_anchor_offset_x
             _y = y * self._cell_size + self._next_figure_field_offset_y - self._cell_anchor_offset_y
-            self._next_figure_image_ids.append(
+            self._next_figure_image_ids.add(
                 self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=self._cell_falling_image))
 
     def refresh_ui(self):
