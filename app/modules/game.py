@@ -12,7 +12,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.2
+TICK_INTERVAL = 0.3
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -56,7 +56,8 @@ class Game:
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
-        self._cell_updater_thread = TickThread(self._update_cells, tick_interval_sec=0.01, startup_sleep_sec=0)
+        self._cell_updater_thread = TickThread(self._update_cells, tick_interval_sec=TICK_INTERVAL / 2,
+                                               startup_sleep_sec=0)
         self._cell_updater_thread.start()
     #
     #     self._ui_root.new_game()
@@ -72,74 +73,14 @@ class Game:
 
     def _repaint_all(self):
         pass
-    #
-    # def _paint_cell(self, x: int, y: int, cell: c.Cell):
-    #     # Remove existing image
-    #     if cell.image_id is not None:
-    #         self._ui_root.delete_image(cell.image_id)
-    #     # Paint new image if needed
-    #     if y < FIELD_HIDDEN_TOP_ROWS_NUMBER:
-    #         return  # Don't show cells on hidden rows
-    #     if cell.state == c.CellState.FILLED:
-    #         cell.image_id = self._ui_root.paint_filled(x, y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
-    #     elif cell.state == c.CellState.FALLING:
-    #         cell.image_id = self._ui_root.paint_falling(x, y - FIELD_HIDDEN_TOP_ROWS_NUMBER)
-    #
-    # def _fix_figure(self):
-    #     print("Fixing figure")
-    #     for point in self._figure.current_points:
-    #         self._set_cell_state_and_paint(point.x, point.y, c.CellState.FILLED)
-    #     self._ui_root.refresh_ui()
-    #     self._figure = None
-    #
-    # def _spawn_figure(self):
-    #     # First, check full rows and clear them if needed
-    #     self._clear_rows()
-    #
-    #     # Spawn new if needed
-    #     if not self._game_over and self._figure is None:
-    #         self._field.spawn_figure()
-    #         self._ui_root.show_next_figure(self._next_figure.current_matrix())
-    #         can_place = self._place(FIELD_HIDDEN_TOP_ROWS_NUMBER, 0)
-    #         if can_place is False:
-    #             self._game_over = True
-    #             self._ui_root.game_over()
-    #             self._ui_root.sounds.game_over.play()
-    #             print('Cannot place new figure - game over')
-    #         return can_place
-    #
-    # # def _place(self, x: int, y: int):
-    # #
-    # #     initial_points = copy.deepcopy(self._figure.current_points)
-    # #     target_points = self._field.can_place(x, y, self._figure)
-    # #     if target_points is None:
-    # #         return False
-    # #
-    # #     draw_points = target_points.difference(initial_points)
-    # #     clear_points = initial_points.difference(target_points)
-    # #
-    # #     for new_x, new_y in clear_points:
-    # #         self._set_cell_state_and_paint(new_x, new_y, c.CellState.EMPTY)
-    # #     for new_x, new_y in draw_points:
-    # #         self._set_cell_state_and_paint(new_x, new_y, c.CellState.FALLING)
-    # #
-    # #     self._ui_root.refresh_ui()
-    # #     return True
 
     def _move_left(self):
-        move_result = self._field.move_left()
-        if len(move_result) > 0:
+        if self._field.move_left():
             self._ui_root.sounds.move.play()
 
     def _move_right(self):
-        move_result = self._field.move_right()
-        if len(move_result) > 0:
+        if self._field.move_right():
             self._ui_root.sounds.move.play()
-
-    def _move_down(self):
-        move_result = self._field.move_down()
-        if len(move_result) > 0:
-            self._ui_root.sounds.tick.play()
 
     def _force_down(self):
         pass
@@ -156,16 +97,14 @@ class Game:
     def _rotate(self):
         if self.paused or self._game_over:
             return
-        rotate_result = self._field.rotate()
-        if len(rotate_result) > 0:
+        if self._field.rotate():
             self._ui_root.sounds.rotate.play()
 
     def _tick(self):
         if self.paused or self._game_over:
             return
 
-        tick_result = self._field.tick()
-        if len(tick_result) == 0:
+        if not self._field.tick():
             self._game_over = True
             self.tick_thread.stop()
         self._ui_root.sounds.tick.play()
