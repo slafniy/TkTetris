@@ -12,7 +12,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.25
+TICK_INTERVAL = 0.1
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -49,7 +49,7 @@ class Game:
 
     #     self._ui_root.show_next_figure(self._next_figure.current_matrix())
     #
-        self._field.spawn_figure()
+        # self._field.spawn_figure()
         self.paused = False
     #
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
@@ -164,13 +164,9 @@ class Game:
             # print("Skip tick because of game over")
             return
 
-        move_result = self._field.move_down()  # cannot move down, fixing and spawn new one
-        if len(move_result) > 0:
-            self._ui_root.sounds.tick.play()
-            self._ui_root.apply_field_change(move_result)
-        else:
-            if not len(self._field.spawn_figure()) > 0:
-                self._game_over = True
+        tick_result = self._field.tick()
+        self._ui_root.sounds.tick.play()
+        # self._ui_root.apply_field_change(tick_result)
 
     #
     # def _clear_rows(self):

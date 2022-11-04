@@ -134,17 +134,20 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         return self._base_canvas.create_image(x, y, anchor=tk.NW, image=cell_image)
 
     def apply_field_change(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]):
+        logger.debug(f'BEFORE: {self._game_field_cells_ids=}')
         for cell_state, points in changed_points.items():
             if cell_state == CellState.EMPTY:
                 self._remove_cells(points)
             else:
                 self._paint_cells(points, cell_state)
+        logger.debug(f'AFTER: {self._game_field_cells_ids=}')
 
     def _remove_cells(self, points: t.Set[Point]):
         for point in points:
             image_id = self._game_field_cells_ids.pop(point, None)
             if image_id is not None:
                 self.delete_image(image_id)
+        logger.debug(f'REMOVED: {points=}')
 
     def _paint_cells(self, points: t.Set[Point], state: CellState):
         cell_image = self._cell_falling_image if state == CellState.FALLING else self._cell_filled_image

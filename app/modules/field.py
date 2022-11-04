@@ -22,51 +22,89 @@ class Field:
         self._field_lock = threading.RLock()  # block simultaneous changes
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
+        self._game_over = False
 
     def _move(self, x_diff=0, y_diff=0) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current figure"""
+        if self._game_over:
+            return OrderedDict()
         with self._field_lock:
             changed_points = self._try_place(
                 f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
             self._apply_changes(changed_points)
             return changed_points
 
-    def move_left(self):
+    def move_left(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current figure one cell left"""
         return self._move(x_diff=-1)
 
-    def move_right(self):
+    def move_right(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current figure one cell right"""
         return self._move(x_diff=1)
 
-    def move_down(self):
+    def move_down(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current one cell down"""
-        logger.debug('MOVE DOWN')
         return self._move(y_diff=1)
+
+    def tick(self):
+        """What to do on each step"""
+        if self._game_over:
+            return
+
+        # Spawn figure if needed (on startup)
+        if self._figure is None:
+            self._apply_changes(self.spawn_figure())
+            return  # TODO: maybe shouldn't
+
+        # Try to move current fig down
+        changed_points = self.move_down()
+        if len(changed_points) > 0:
+            self._apply_changes(changed_points)
+        else:
+            logger.debug('FIXING FIGURE')
+            self._apply_changes(self._fix_figure())
+            changed_points = self.spawn_figure()
+            if len(changed_points) > 0:
+                self._apply_changes(changed_points)
+            else:
+                self._game_over = True
+                logger.info('GAME OVER')
+                return
+
+        # Check full rows
+        logger.debug('CHECK FULL ROWS')
+
+    def _fix_figure(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
+        result = OrderedDict()
+        points = self._figure.get_points()
+        result[CellState.EMPTY] = points
+        result[CellState.FILLED] = points
+        return result
 
     def rotate(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Rotate current figure clockwise"""
+        if self._game_over:
+            return OrderedDict()
         logger.debug('ROTATE')
         with self._field_lock:
-            for position in self._figure.position,\
-                            (f.Point(self._figure.position[0] - 1, self._figure.position[1])),\
-                            (f.Point(self._figure.position[0], self._figure.position[1] - 1)),\
-                            (f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1)):
+            for position in [self._figure.position,
+                             (f.Point(self._figure.position[0] - 1, self._figure.position[1])),
+                             (f.Point(self._figure.position[0], self._figure.position[1] - 1)),
+                             (f.Point(self._figure.position[0] - 1, self._figure.position[1] - 1))]:
                 changed_points = self._try_place(position, next_rotation=True)
                 if len(changed_points) > 0:
                     self._apply_changes(changed_points)
                     return changed_points
             return OrderedDict()
 
-    def spawn_figure(self):
+    def spawn_figure(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Spawn the new figure"""
         with self._field_lock:
             self._figure = self._next_figure
             self._next_figure = random.choice(f.all_figures)()
             result = self._try_place(f.Point(int(self.width / 2) - 2, 0))  # if it's False - game over
-            if not result:
+            if not len(result) > 0:
                 logger.info('Cannot spawn new figure!')
-            self._apply_changes(result)
             return result
 
     def get(self, x: int, y: int) -> CellState:
