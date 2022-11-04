@@ -113,17 +113,17 @@ class Field:
         if row_index is None:
             return
 
-        cells_to_destroy = [(x, row_index) for x in range(self.width)]
-        cells_to_move_down = []
+        cells_to_destroy = {f.Point(x, row_index) for x in range(self.width)}
+        cells_to_move_down = set()
         for x in range(self.width):
             for y in range(0, row_index):
                 if self._get(x, y) == CellState.FILLED:
-                    cells_to_move_down.append((x, y))
+                    cells_to_move_down.add(f.Point(x, y + 1))
+                    cells_to_destroy.add(f.Point(x, y))
 
-        # for x, y in cells_to_destroy:
-        #     self._set_cell_state_and_paint(x, y, CellState.EMPTY)
+        self._apply_changes(OrderedDict({CellState.EMPTY: cells_to_destroy,
+                                         CellState.FILLED: cells_to_move_down}))
 
-        # time.sleep(0.2)
 
         # for x, y in cells_to_move_down:
         #     self._set_cell_state_and_paint(x, y, CellState.EMPTY)
