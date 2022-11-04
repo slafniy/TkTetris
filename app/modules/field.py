@@ -22,13 +22,12 @@ class Field:
         self._field_lock = threading.RLock()  # block simultaneous changes
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
-        self._game_over = False
 
     def _move(self, x_diff=0, y_diff=0) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Move current figure"""
-        if self._game_over:
-            return OrderedDict()
         with self._field_lock:
+            if self._figure.position is None:  # Figure isn't placed anywhere
+                return OrderedDict()
             changed_points = self._try_place(
                 f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
             self._apply_changes(changed_points)
@@ -48,8 +47,6 @@ class Field:
 
     def tick(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """What to do on each step"""
-        if self._game_over:
-            return OrderedDict()
 
         # Spawn figure if needed (on startup)
         if self._figure is None:
@@ -66,18 +63,8 @@ class Field:
             logger.debug('FIXING FIGURE')
             fix_result = self._fix_figure()
             self._apply_changes(fix_result)
-            spawn_new_result = self.spawn_figure()
-            self._apply_changes(spawn_new_result)
-
-            if not len(spawn_new_result):
-                self._game_over = True
-                logger.info('GAME OVER')
-
-            fix_result.update(spawn_new_result)  # TODO: possible information lost?
+            self._figure = None
             return fix_result
-
-            # Check full rows
-            logger.debug('CHECK FULL ROWS')
 
     def _fix_figure(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         result = OrderedDict()
@@ -88,8 +75,6 @@ class Field:
 
     def rotate(self) -> t.OrderedDict[CellState, t.Set[f.Point]]:
         """Rotate current figure clockwise"""
-        if self._game_over:
-            return OrderedDict()
         logger.debug('ROTATE')
         with self._field_lock:
             for position in [self._figure.position,

@@ -165,8 +165,11 @@ class Game:
             return
 
         tick_result = self._field.tick()
+        if len(tick_result) == 0:
+            self._game_over = True
+            self.tick_thread.stop()
         self._ui_root.sounds.tick.play()
-        # self._ui_root.apply_field_change(tick_result)
+        self._ui_root.apply_field_change(tick_result)
 
     #
     # def _clear_rows(self):
