@@ -12,4 +12,12 @@ class Logger(logging.Logger):
         self.addHandler(stream_handler)
 
 
-logger = Logger('Tetris', logging.DEBUG)
+def __get_logger():
+    """Generator to made logger initialized once"""
+    one_logger = Logger('Tetris', logging.DEBUG)
+    while True:
+        yield one_logger
+
+
+__get_logger_gen = __get_logger()
+logger = next(__get_logger_gen)

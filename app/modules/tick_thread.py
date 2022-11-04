@@ -34,4 +34,3 @@ class TickThread(threading.Thread):
             # Using cycle instead of simple sleep to catch possible change of _tick_interval
             while start_time + self._tick_interval > time.time():
                 time.sleep(self._tick_interval / 100)
-                continue

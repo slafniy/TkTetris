@@ -2,29 +2,18 @@
 import typing as t
 from abc import ABC, abstractmethod
 
-from . import figures
+from .figures import Point
 from .resources import SoundResources
+from .cell import CellState
 
 
 class AbstractUI(ABC):
     """Interface-like class to describe what abstract UI should have"""
 
     @abstractmethod
-    def paint_filled(self, x: int, y: int) -> int:
+    def apply_field_change(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]) -> int:
         """
         Paints filled cell on game field
-        """
-
-    @abstractmethod
-    def paint_falling(self, x: int, y: int) -> int:
-        """
-        Paints falling cell on game field
-        """
-
-    @abstractmethod
-    def delete_image(self, img_id: int):
-        """
-        Deletes image from game field via ID
         """
 
     @abstractmethod
@@ -52,7 +41,7 @@ class AbstractUI(ABC):
         """
 
     @abstractmethod
-    def show_next_figure(self, points: t.Set[figures.Point]):
+    def show_next_figure(self, points: t.Set[Point]):
         """
         Show the next figure in the separate field
         """

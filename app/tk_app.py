@@ -1,3 +1,4 @@
+import argparse
 import tkinter as tk
 import typing as t
 
@@ -5,9 +6,12 @@ import simpleaudio as sa
 import yaml
 
 import modules.abstract_ui as abstract_ui
-import modules.figures as figures
 import modules.game as game
 import modules.controls_handler as ch
+
+from modules.cell import CellState
+from modules.figures import Point
+from modules.logger import logger
 from modules.resources import SoundResources, get_resources_path
 
 VERSION = '1.1d'
@@ -24,6 +28,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         super().__init__()
         self.title(f'TkTetris {VERSION}')
         self._controls_handler = controls_handler
+
+        # to store ids and states of painted cell images
+        self._game_field_cells: t.Dict[Point, t.Tuple[int, CellState]] = {}
 
         self._prepare_ui()  # initialize menus and binds
 
@@ -47,7 +54,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._current_music: t.List[sa.PlayObject] = []
         self._current_skin_rb: tk.StringVar  # this is for radiobutton
         self._loaded_skin: t.Optional[str] = None  # this is to control loading skin if it's already loaded
-        self._next_figure_image_ids = []
+
+        self._next_figure_points: t.Set[Point] = set()  # store to repaint if skin changed
+        self._next_figure_image_ids: t.Set[int] = set()
 
         self._load_skin()  # paint all stuff now
 
@@ -102,16 +111,23 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         # Stop any music if any and run new
         [i.stop() for i in self._current_music]
-        self._current_music.append(self.sounds.startup.play())
+        # self._current_music.append(self.sounds.startup.play())
         self._loaded_skin = skin_name
 
-    def show_next_figure(self, points: t.List[figures.Point]):
+        # Repaint stuff if any
+        self.show_next_figure(self._next_figure_points)
+        for point, cell in self._game_field_cells.items():
+            if cell[1] == CellState.FILLED:
+                self._paint_cell(point, self._cell_filled_image)
+
+    def show_next_figure(self, points: t.Set[Point]):
+        self._next_figure_points = points
         [self.delete_image(i) for i in self._next_figure_image_ids]
-        self._next_figure_image_ids = []
+        self._next_figure_image_ids = set()
         for x, y in points:
             _x = x * self._cell_size + self._next_figure_field_offset_x - self._cell_anchor_offset_x
             _y = y * self._cell_size + self._next_figure_field_offset_y - self._cell_anchor_offset_y
-            self._next_figure_image_ids.append(
+            self._next_figure_image_ids.add(
                 self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=self._cell_falling_image))
 
     def refresh_ui(self):
@@ -120,16 +136,28 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     def delete_image(self, img_id):
         self._base_canvas.delete(img_id)
 
-    def _paint_cell(self, x, y, cell_image):
-        _x = x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
-        _y = y * self._cell_size + self._game_field_offset_y - self._cell_anchor_offset_y
-        return self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=cell_image)
+    def _paint_cell(self, point: Point, cell_image: tk.PhotoImage) -> int:
+        x = point.x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
+        y = point.y * self._cell_size + self._game_field_offset_y - self._cell_anchor_offset_y
+        return self._base_canvas.create_image(x, y, anchor=tk.NW, image=cell_image)
 
-    def paint_filled(self, x, y):
-        return self._paint_cell(x, y, self._cell_filled_image)
+    def apply_field_change(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]):
+        for cell_state, points in changed_points.items():
+            if cell_state == CellState.EMPTY:
+                self._remove_cells(points)
+            else:
+                self._paint_cells(points, cell_state)
 
-    def paint_falling(self, x, y):
-        return self._paint_cell(x, y, self._cell_falling_image)
+    def _remove_cells(self, points: t.Set[Point]):
+        for point in points:
+            image_id, _ = self._game_field_cells.pop(point, None)
+            if image_id is not None:
+                self.delete_image(image_id)
+
+    def _paint_cells(self, points: t.Set[Point], state: CellState):
+        cell_image = self._cell_falling_image if state == CellState.FALLING else self._cell_filled_image
+        for point in points:
+            self._game_field_cells[point] = (self._paint_cell(point, cell_image), state)
 
     def game_over(self):
         pass
@@ -192,4 +220,11 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log-level', default='WARNING', dest='log_level',
+                        help='Logging level. Example --loglevel=DEBUG, default level - WARNING')
+    args = parser.parse_args()
+
+    logger.setLevel(args.log_level.upper())
+
     main()
