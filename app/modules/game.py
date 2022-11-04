@@ -12,7 +12,7 @@ from . import controls_handler as ch
 from .abstract_ui import AbstractUI
 from .logger import logger
 
-TICK_INTERVAL = 0.3
+TICK_INTERVAL = 0.2
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -65,7 +65,7 @@ class Game:
 
     def _update_cells(self):
         while not self._game_over:
-            patch = self._field.q.get()
+            patch = self._field.graphic_events_q.get()
             self._ui_root.apply_field_change(patch)
 
     def _new_game(self):

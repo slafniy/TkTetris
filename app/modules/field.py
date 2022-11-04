@@ -23,7 +23,7 @@ class Field:
         self._field_lock = threading.RLock()  # block simultaneous changes
         self._figure: t.Optional[f.Figure] = None  # Current falling figure
         self._next_figure: t.Optional[f.Figure] = random.choice(f.all_figures)()  # Next figure to spawn
-        self.q: Queue[t.Dict[CellState, t.Set[f.Point]]] = Queue()  # cells events
+        self.graphic_events_q: Queue[t.Dict[CellState, t.Set[f.Point]]] = Queue()  # cells events
 
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
@@ -52,7 +52,10 @@ class Field:
             self._new_figure()
 
         # Try to move current fig down
-        return self.move_down()
+        if not self.move_down():
+            return self._new_figure()
+
+        return True
 
     def _fix_figure(self):
         logger.debug('Fixing current figure')
@@ -127,7 +130,7 @@ class Field:
     def _apply_changes(self, changed_points: t.OrderedDict[CellState, t.Set[f.Point]]):
         """Apply a bunch of changes to the field"""
         with self._field_lock:
-            self.q.put(changed_points)
+            self.graphic_events_q.put(changed_points)
             for cell_state, points in changed_points.items():
                 logger.debug(f'FIELD APPLY: {cell_state}: {points}')
                 for point in points:

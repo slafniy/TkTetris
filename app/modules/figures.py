@@ -142,5 +142,4 @@ class RLFigure(Figure):
         self[Rotation.WEST] = {(0, 2), (1, 2), (2, 2), (2, 3)}
 
 
-all_figures = [IFigure]
-# all_figures = [ZFigure, TFigure, IFigure, SFigure, OFigure, LFigure, RLFigure]
+all_figures = [ZFigure, TFigure, IFigure, SFigure, OFigure, LFigure, RLFigure]
