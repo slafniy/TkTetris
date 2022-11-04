@@ -130,11 +130,16 @@ class Field:
     def _apply_changes(self, changed_points: t.OrderedDict[CellState, t.Set[f.Point]]):
         """Apply a bunch of changes to the field"""
         with self._field_lock:
-            self.graphic_events_q.put(changed_points)
             for cell_state, points in changed_points.items():
+                graphics_patch = {cell_state: set()}
                 logger.debug(f'FIELD APPLY: {cell_state}: {points}')
                 for point in points:
                     self._set(point.x, point.y, cell_state)
+                    # make conversions to hide top cells from graphics - virtually move field up and ignore top rows
+                    fake_y = point.y - FIELD_HIDDEN_TOP_ROWS_NUMBER
+                    if fake_y >= 0:
+                        graphics_patch[cell_state].add(f.Point(point.x, fake_y))
+                self.graphic_events_q.put(graphics_patch)
             logger.debug('Field after _apply_changes: %s', self)
 
     def _try_place(self, new_position: f.Point, next_rotation=False) -> bool:
