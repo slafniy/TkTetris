@@ -47,7 +47,7 @@ class Field:
     def _move(self, x_diff=0, y_diff=0) -> bool:
         """Move current figure"""
         with self._field_lock:
-            if self._figure is not None and self._figure.position is None:  # Figure isn't placed anywhere
+            if self._figure is None or self._figure.position is None:  # Figure isn't placed anywhere
                 return False
             return self._try_place(f.Point(self._figure.position.x + x_diff, self._figure.position.y + y_diff))
 

@@ -29,8 +29,8 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self.title(f'TkTetris {VERSION}')
         self._controls_handler = controls_handler
 
-        # to store ids of painted cell images
-        self._game_field_cells_ids: t.Dict[Point, int] = {}
+        # to store ids and states of painted cell images
+        self._game_field_cells: t.Dict[Point, t.Tuple[int, CellState]] = {}
 
         self._prepare_ui()  # initialize menus and binds
 
@@ -116,6 +116,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
         # Repaint stuff if any
         self.show_next_figure(self._next_figure_points)
+        for point, cell in self._game_field_cells.items():
+            if cell[1] == CellState.FILLED:
+                self._paint_cell(point, self._cell_filled_image)
 
     def show_next_figure(self, points: t.Set[Point]):
         self._next_figure_points = points
@@ -147,14 +150,14 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
     def _remove_cells(self, points: t.Set[Point]):
         for point in points:
-            image_id = self._game_field_cells_ids.pop(point, None)
+            image_id, _ = self._game_field_cells.pop(point, None)
             if image_id is not None:
                 self.delete_image(image_id)
 
     def _paint_cells(self, points: t.Set[Point], state: CellState):
         cell_image = self._cell_falling_image if state == CellState.FALLING else self._cell_filled_image
         for point in points:
-            self._game_field_cells_ids[point] = self._paint_cell(point, cell_image)
+            self._game_field_cells[point] = (self._paint_cell(point, cell_image), state)
 
     def game_over(self):
         pass
