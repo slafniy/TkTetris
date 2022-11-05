@@ -58,6 +58,8 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._next_figure_points: t.Set[Point] = set()  # store to repaint if skin changed
         self._next_figure_image_ids: t.Set[int] = set()
 
+        self._score_image_ids = set()
+
         self._load_skin()  # paint all stuff now
 
     @property
@@ -106,6 +108,15 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._base_canvas.grid(column=0, row=0, sticky=tk.NW)
         self.geometry(f'{self._base_image.width()}x{self._base_image.height()}')
 
+        # Scores
+        self._score_digit_offset_x = cfg['score_digit_nw']['x']
+        self._score_digit_offset_y = cfg['score_digit_nw']['y']
+        self._digit_width = cfg['digit_size']['width']
+        self._digit_height = cfg['digit_size']['height']
+        self._digit_images = {str(digit): tk.PhotoImage(file=str(gfx_resources_path / f"{digit}.png"))
+                              for digit in range(9)}
+        self._show_score(0)
+
         if callable(self._controls_handler.skin_change_func):
             self._controls_handler.skin_change_func()
 
@@ -135,6 +146,14 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
     def delete_image(self, img_id):
         self._base_canvas.delete(img_id)
+
+    def _show_score(self, score: int):
+        [self.delete_image(i) for i in self._score_image_ids]
+        score_str = f'{score:04d}'
+        for i, digit in enumerate(score_str):
+            x = self._score_digit_offset_x + i * self._digit_width
+            self._score_image_ids.add(self._base_canvas.create_image(x, self._score_digit_offset_y,
+                                                                     anchor=tk.NW, image=self._digit_images[digit]))
 
     def _paint_cell(self, point: Point, cell_image: tk.PhotoImage) -> int:
         x = point.x * self._cell_size + self._game_field_offset_x - self._cell_anchor_offset_x
