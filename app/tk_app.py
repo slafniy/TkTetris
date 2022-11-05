@@ -19,7 +19,7 @@ VERSION = '1.1d'
 COLOR_BACKGROUND = "#000000"
 
 
-class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
+class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
     """
     Main window class
     """
@@ -221,12 +221,12 @@ def main():
     controls_handler = ch.ControlsHandler()
 
     # Create main GUI class and bind controls handler to it
-    ui_root = TkTetrisUI()
+    ui_root = TkTetrisGUI()
     ui_root.bind(sequence='<KeyPress>', func=controls_handler.on_key_press)
     ui_root.bind(sequence='<KeyRelease>', func=controls_handler.on_key_release)
 
     # Game logic class - binds GUI, controls and logic together
-    game.Game(controls_handler=controls_handler, ui_root=ui_root)
+    game.Game(controls_handler=controls_handler, gui=ui_root)
 
     ui_root.geometry("+800+300")
 

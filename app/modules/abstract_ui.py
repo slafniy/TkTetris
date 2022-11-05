@@ -7,7 +7,7 @@ from .resources import SoundResources
 from .cell import CellState
 
 
-class AbstractUI(ABC):
+class AbstractGUI(ABC):
     """Interface-like class to describe what abstract UI should have"""
 
     @abstractmethod

@@ -4,7 +4,7 @@ from functools import lru_cache
 from .tick_thread import TickThread
 from .field import FieldEventType, Field
 from .controls_handler import ControlEventType, ControlsHandler, Commands
-from .abstract_ui import AbstractUI
+from .abstract_ui import AbstractGUI
 from .logger import logger
 
 TICK_INTERVAL = 0.68
@@ -22,14 +22,24 @@ class Game:
     """
 
     def __init__(self, *, width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-                 controls_handler: ControlsHandler, ui_root: AbstractUI):
+                 controls_handler: ControlsHandler, gui: AbstractGUI):
         """
         :param width: How many cells one horizontal row contains
         :param height: How many cells one vertical column contains
         """
         self._controls_handler = controls_handler
-        self._ui_root = ui_root
+        self.gui = gui
         self._field = Field(width, height)  # An internal structure to store field state (two-dimensional list)
+
+        self._command_to_callback_map = {
+            Commands.MOVE_LEFT: self._move_left,
+            Commands.MOVE_RIGHT: self._move_right,
+            Commands.ROTATE: self._rotate,
+            Commands.FORCE_DOWN: self._force_down,
+            Commands.FORCE_DOWN_CANCEL: self._force_down_cancel,
+            Commands.PAUSE: self._pause,
+            Commands.NEW_GAME: self._new_game
+        }
 
         self._current_tick = TICK_INTERVAL
         self.paused = False
@@ -51,18 +61,8 @@ class Game:
     def _poll_next_control_event(self):
         event = self._controls_handler.events_q.get()
         logger.debug(f'Control event: {event}')
-
         if event.event_type == ControlEventType.KEY_PRESS:
-            if event.payload == Commands.FORCE_DOWN:
-                self._force_down()
-            elif event.payload == Commands.FORCE_DOWN_CANCEL:
-                self._force_down_cancel()
-            elif event.payload == Commands.MOVE_RIGHT:
-                self._move_right()
-            elif event.payload == Commands.MOVE_LEFT:
-                self._move_left()
-            elif event.payload == Commands.ROTATE:
-                self._rotate()
+            self._command_to_callback_map[event.payload]()
 
     def _poll_next_field_event(self):
         if not self._game_over:
@@ -71,44 +71,44 @@ class Game:
 
             # Apply changes on the game field
             if event.event_type == FieldEventType.CELL_STATE_CHANGE:
-                self._ui_root.apply_field_change(event.payload)
+                self.gui.apply_field_change(event.payload)
 
             # We got full row here
             elif event.event_type == FieldEventType.ROW_REMOVED:
-                self._ui_root.sounds.row_delete.play()
+                self.gui.sounds.row_delete.play()
                 self._current_tick *= LEVEL_MULTIPLIER
                 if not self._forcing_speed:
                     self.tick_thread.set_tick(self._current_tick)
                 self._score += 10
-                self._ui_root.show_score(self._score)
+                self.gui.show_score(self._score)
 
             # Figure hit the bottom
             elif event.event_type == FieldEventType.FIGURE_FIXED:
-                self._ui_root.sounds.fix_figure.play()
+                self.gui.sounds.fix_figure.play()
 
             # Game over
             elif event.event_type == FieldEventType.GAME_OVER:
                 self._game_over = True
                 self.tick_thread.stop()
-                self._ui_root.sounds.game_over.play()
+                self.gui.sounds.game_over.play()
 
             # Next figure known
             elif event.event_type == FieldEventType.NEW_FIGURE:
-                self._ui_root.show_next_figure(event.payload)
+                self.gui.show_next_figure(event.payload)
 
     def _new_game(self):
-        self._repaint_all()
+        pass
 
     def _repaint_all(self):
         pass
 
     def _move_left(self):
         self._field.move_left()
-        self._ui_root.sounds.move.play()
+        self.gui.sounds.move.play()
 
     def _move_right(self):
         self._field.move_right()
-        self._ui_root.sounds.move.play()
+        self.gui.sounds.move.play()
 
     def _force_down(self):
         self._forcing_speed = True
@@ -133,17 +133,17 @@ class Game:
 
     def _pause(self):
         self.paused = not self.paused
-        self._ui_root.toggle_pause()
+        self.gui.toggle_pause()
 
     def _rotate(self):
         if self.paused or self._game_over:
             return
         if self._field.rotate():
-            self._ui_root.sounds.rotate.play()
+            self.gui.sounds.rotate.play()
 
     def _tick(self):
         if self.paused or self._game_over:
             return
 
         self._field.tick()
-        self._ui_root.sounds.tick.play()
+        self.gui.sounds.tick.play()
