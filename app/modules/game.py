@@ -31,16 +31,6 @@ class Game:
         self.gui = gui
         self._field = Field(width, height)  # An internal structure to store field state (two-dimensional list)
 
-        self._command_to_callback_map = {
-            Commands.MOVE_LEFT: self._move_left,
-            Commands.MOVE_RIGHT: self._move_right,
-            Commands.ROTATE: self._rotate,
-            Commands.FORCE_DOWN: self._force_down,
-            Commands.FORCE_DOWN_CANCEL: self._force_down_cancel,
-            Commands.PAUSE: self._pause,
-            Commands.NEW_GAME: self._new_game
-        }
-
         self._current_tick = TICK_INTERVAL
         self.paused = False
         self._game_over = False
@@ -62,7 +52,15 @@ class Game:
         event = self._controls_handler.events_q.get()
         logger.debug(f'Control event: {event}')
         if event.event_type == ControlEventType.KEY_PRESS:
-            self._command_to_callback_map[event.payload]()
+            {
+                Commands.MOVE_LEFT: self._on_move_left,
+                Commands.MOVE_RIGHT: self._on_move_right,
+                Commands.ROTATE: self._on_rotate,
+                Commands.FORCE_DOWN: self._on_force_down,
+                Commands.FORCE_DOWN_CANCEL: self._on_force_down_cancel,
+                Commands.PAUSE: self._on_pause,
+                Commands.NEW_GAME: self._on_new_game
+            }[event.payload]()
 
     def _poll_next_field_event(self):
         if not self._game_over:
@@ -96,27 +94,27 @@ class Game:
             elif event.event_type == FieldEventType.NEW_FIGURE:
                 self.gui.show_next_figure(event.payload)
 
-    def _new_game(self):
+    def _on_new_game(self):
         pass
 
     def _repaint_all(self):
         pass
 
-    def _move_left(self):
+    def _on_move_left(self):
         self._field.move_left()
         self.gui.sounds.move.play()
 
-    def _move_right(self):
+    def _on_move_right(self):
         self._field.move_right()
         self.gui.sounds.move.play()
 
-    def _force_down(self):
+    def _on_force_down(self):
         self._forcing_speed = True
         new_tick = self._calc_force_down_tick(self._current_tick)
         # logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
         self.tick_thread.set_tick(new_tick)
 
-    def _force_down_cancel(self):
+    def _on_force_down_cancel(self):
         self._forcing_speed = False
         self.tick_thread.set_tick(self._current_tick)
 
@@ -131,11 +129,11 @@ class Game:
         # high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
         return high_speed_tick
 
-    def _pause(self):
+    def _on_pause(self):
         self.paused = not self.paused
         self.gui.toggle_pause()
 
-    def _rotate(self):
+    def _on_rotate(self):
         if self.paused or self._game_over:
             return
         if self._field.rotate():

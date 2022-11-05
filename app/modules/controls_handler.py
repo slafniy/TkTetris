@@ -4,7 +4,7 @@ import dataclasses
 import enum
 import time
 import typing as t
-from multiprocessing import Queue
+from queue import Queue
 
 from .tick_thread import TickThread
 
@@ -90,7 +90,7 @@ class ControlsHandler:
         if pressed_key.press_time is None:
             pressed_key.press_time = time.time()
         if not pressed_key.has_been_processed_once:
-            self._process_keys(command)
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, command))
         pressed_key.has_been_processed_once = True
 
     def on_key_release(self, event):
@@ -113,18 +113,4 @@ class ControlsHandler:
                     not pressed_key.is_pressed or \
                     time.time() - pressed_key.press_time < TICK_DELAY or not pressed_key.has_been_processed_once:
                 continue
-            self._process_keys(command)
-
-    def _process_keys(self, command):
-        if command == Commands.MOVE_LEFT:
-            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.MOVE_LEFT))
-        if command == Commands.MOVE_RIGHT:
-            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.MOVE_RIGHT))
-        if command == Commands.ROTATE:
-            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.ROTATE))
-        if command == Commands.FORCE_DOWN:
-            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.FORCE_DOWN))
-        if command == Commands.PAUSE:
-            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.PAUSE))
-        if command == Commands.NEW_GAME:
-            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.NEW_GAME))
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, command))

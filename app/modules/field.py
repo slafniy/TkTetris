@@ -5,7 +5,7 @@ import random
 import threading
 import typing as t
 from collections import OrderedDict
-from multiprocessing import Queue
+from queue import Queue
 
 from .logger import logger
 from .cell import CellState
