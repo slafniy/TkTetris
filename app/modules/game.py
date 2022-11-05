@@ -3,7 +3,7 @@ from functools import lru_cache
 
 from .tick_thread import TickThread
 from .field import FieldEventType, Field
-from . import controls_handler as ch
+from .controls_handler import ControlEventType, ControlsHandler, Commands
 from .abstract_ui import AbstractUI
 from .logger import logger
 
@@ -22,39 +22,47 @@ class Game:
     """
 
     def __init__(self, *, width=FIELD_WIDTH, height=FIELD_HEIGHT + FIELD_HIDDEN_TOP_ROWS_NUMBER,
-                 controls_handler: ch.ControlsHandler, ui_root: AbstractUI):
+                 controls_handler: ControlsHandler, ui_root: AbstractUI):
         """
         :param width: How many cells one horizontal row contains
         :param height: How many cells one vertical column contains
         """
-
-        # Bind controls handler to Field methods
         self._controls_handler = controls_handler
-        self._controls_handler.move_left_func = self._move_left
-        self._controls_handler.move_right_func = self._move_right
-        self._controls_handler.force_down_func = self._force_down
-        self._controls_handler.force_down_cancel_func = self._force_down_cancel
-        self._controls_handler.rotate_func = self._rotate
-        self._controls_handler.pause_func = self._pause
-        self._controls_handler.new_game_func = self._new_game
-        self._controls_handler.skin_change_func = self._repaint_all
-
         self._ui_root = ui_root
-
         self._field = Field(width, height)  # An internal structure to store field state (two-dimensional list)
 
         self._current_tick = TICK_INTERVAL
-
         self.paused = False
         self._game_over = False
         self._forcing_speed = False
         self._score = 0
 
+        self._controls_poller_thread = TickThread(self._poll_next_control_event, tick_interval_sec=0.001,
+                                                  startup_sleep_sec=0)
+        self._controls_poller_thread.start()
+
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
 
-        self._cell_updater_thread = TickThread(self._poll_next_field_event, tick_interval_sec=0.001, startup_sleep_sec=0)
+        self._cell_updater_thread = TickThread(self._poll_next_field_event, tick_interval_sec=0.001,
+                                               startup_sleep_sec=0)
         self._cell_updater_thread.start()
+
+    def _poll_next_control_event(self):
+        event = self._controls_handler.events_q.get()
+        logger.debug(f'Control event: {event}')
+
+        if event.event_type == ControlEventType.KEY_PRESS:
+            if event.payload == Commands.FORCE_DOWN:
+                self._force_down()
+            elif event.payload == Commands.FORCE_DOWN_CANCEL:
+                self._force_down_cancel()
+            elif event.payload == Commands.MOVE_RIGHT:
+                self._move_right()
+            elif event.payload == Commands.MOVE_LEFT:
+                self._move_left()
+            elif event.payload == Commands.ROTATE:
+                self._rotate()
 
     def _poll_next_field_event(self):
         if not self._game_over:

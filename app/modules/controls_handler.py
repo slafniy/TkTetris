@@ -1,94 +1,130 @@
 """Interface between UI, user and logic"""
 import collections
 import dataclasses
+import enum
 import time
 import typing as t
+from multiprocessing import Queue
 
 from .tick_thread import TickThread
 
-# Default key binds
-MOVE_LEFT = 37  # Left arrow
-MOVE_RIGHT = 39  # Right arrow
-ROTATE = 38  # Up arrow
-FORCE_DOWN = 40  # Down arrow
-PAUSE = 32  # Space
-NEW_GAME = 13  # Enter
+
+class _Keycodes(enum.IntEnum):
+    """Commands and key binds"""
+    LEFT_ARROW = 37  # Left arrow
+    RIGHT_ARROW = 39  # Right arrow
+    UP_ARROW = 38  # Up arrow
+    DOWN_ARROW = 40  # Down arrow
+    SPACE = 32  # Space
+    ENTER = 13  # Enter
+
 
 TICK_INTERVAL = 0.08
 TICK_DELAY = 0.2
 
 
 @dataclasses.dataclass
-class KeyEventParams:
+class _KeyEventParams:
     """Stores info about pressed key"""
     is_pressed: bool = False
     press_time: t.Optional[float] = None
     has_been_processed_once: bool = False
 
 
+class ControlEventType(enum.StrEnum):
+    """Possible event types"""
+    KEY_PRESS = enum.auto()
+
+
+class Commands(enum.StrEnum):
+    """Commands"""
+    MOVE_LEFT = enum.auto()  # Left arrow
+    MOVE_RIGHT = enum.auto()  # Right arrow
+    ROTATE = enum.auto()  # Up arrow
+    FORCE_DOWN = enum.auto()  # Down arrow
+    FORCE_DOWN_CANCEL = enum.auto()  # Down arrow
+    PAUSE = enum.auto()  # Space
+    NEW_GAME = enum.auto()  # Enter
+
+
+@dataclasses.dataclass
+class ControlEvent:
+    """Stores control event e.g. move key press, skin change, new game etc."""
+    event_type: ControlEventType
+    payload: t.Any = None
+
+
 class ControlsHandler:
     """
     Handles key pressing/release avoiding OS specific timers for key repeat
     """
-    REPEAT_KEYS = {MOVE_RIGHT, MOVE_LEFT}  # repeat only this, other keys processed once per press
+    # auto-repeat until key release only this commands, other keys processed once per press
+    REPEAT_COMMAND = {Commands.MOVE_RIGHT,
+                      Commands.MOVE_LEFT}
 
     def __init__(self):
-        self.move_left_func = None
-        self.move_right_func = None
-        self.force_down_func = None
-        self.force_down_cancel_func = None
-        self.rotate_func = None
-        self.pause_func = None
-        self.new_game_func = None
-        self.skin_change_func = None
 
-        # int keycode: (bool is_pressed, float pressed time, bool )
-        self._keys_pressed = collections.defaultdict(KeyEventParams)
+        self._keycode_to_command_map = {
+            _Keycodes.LEFT_ARROW: Commands.MOVE_LEFT,
+            _Keycodes.RIGHT_ARROW: Commands.MOVE_RIGHT,
+            _Keycodes.DOWN_ARROW: Commands.FORCE_DOWN,
+            _Keycodes.UP_ARROW: Commands.ROTATE,
+            _Keycodes.SPACE: Commands.PAUSE,
+            _Keycodes.ENTER: Commands.NEW_GAME
+        }
+
+        self.events_q = Queue()
+
+        self._keys_pressed = collections.defaultdict(_KeyEventParams)
 
         self.tick_thread = TickThread(self._process_pressed_keys, TICK_INTERVAL)
         self.tick_thread.start()
 
     def on_key_press(self, event):
-        kp = self._keys_pressed[event.keycode]
-        kp.is_pressed = True
-        if kp.press_time is None:
-            kp.press_time = time.time()
-        if not kp.has_been_processed_once:
-            self._process_keys(event.keycode)
-        kp.has_been_processed_once = True
+        """Callback for pressed key, should be bound to GUI class"""
+        command = self._keycode_to_command_map.get(event.keycode, None)
+        if command is None:
+            return
+        pressed_key = self._keys_pressed[command]
+        pressed_key.is_pressed = True
+        if pressed_key.press_time is None:
+            pressed_key.press_time = time.time()
+        if not pressed_key.has_been_processed_once:
+            self._process_keys(command)
+        pressed_key.has_been_processed_once = True
 
     def on_key_release(self, event):
-        kp = self._keys_pressed[event.keycode]
-        kp.is_pressed = False
-        kp.press_time = None
-        kp.has_been_processed_once = False
+        """Callback for released key, should be bound to GUI class"""
+        command = self._keycode_to_command_map.get(event.keycode, None)
+        if command is None:
+            return
+        released_key = self._keys_pressed[command]
+        released_key.is_pressed = False
+        released_key.press_time = None
+        released_key.has_been_processed_once = False
 
-        if event.keycode == FORCE_DOWN:
-            self.force_down_cancel_func()
+        if command == Commands.FORCE_DOWN:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.FORCE_DOWN_CANCEL))
 
     def _process_pressed_keys(self):
         # Make a decision what should we do with this key
-        for code, kp in self._keys_pressed.items():
-            if code not in self.REPEAT_KEYS or \
-                    not kp.is_pressed or time.time() - kp.press_time < TICK_DELAY or not kp.has_been_processed_once:
+        for command, pressed_key in self._keys_pressed.items():
+            if command not in self.REPEAT_COMMAND or \
+                    not pressed_key.is_pressed or \
+                    time.time() - pressed_key.press_time < TICK_DELAY or not pressed_key.has_been_processed_once:
                 continue
-            self._process_keys(code)
+            self._process_keys(command)
 
-    def _process_keys(self, code):
-        if code == MOVE_LEFT and callable(self.move_left_func):
-            # noinspection PyCallingNonCallable
-            self.move_left_func()
-        if code == MOVE_RIGHT and callable(self.move_right_func):
-            # noinspection PyCallingNonCallable
-            self.move_right_func()
-        if code == ROTATE and callable(self.rotate_func):
-            # noinspection PyCallingNonCallable
-            self.rotate_func()
-        if code == FORCE_DOWN and callable(self.force_down_func):
-            # noinspection PyCallingNonCallable
-            self.force_down_func()
-        if code == PAUSE and callable(self.pause_func):
-            # noinspection PyCallingNonCallable
-            self.pause_func()
-        if code == NEW_GAME and callable(self.new_game_func):
-            self.new_game_func()
+    def _process_keys(self, command):
+        if command == Commands.MOVE_LEFT:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.MOVE_LEFT))
+        if command == Commands.MOVE_RIGHT:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.MOVE_RIGHT))
+        if command == Commands.ROTATE:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.ROTATE))
+        if command == Commands.FORCE_DOWN:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.FORCE_DOWN))
+        if command == Commands.PAUSE:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.PAUSE))
+        if command == Commands.NEW_GAME:
+            self.events_q.put(ControlEvent(ControlEventType.KEY_PRESS, Commands.NEW_GAME))

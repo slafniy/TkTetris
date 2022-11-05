@@ -24,10 +24,9 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     Main window class
     """
 
-    def __init__(self, controls_handler: ch.ControlsHandler):
+    def __init__(self):
         super().__init__()
         self.title(f'TkTetris {VERSION}')
-        self._controls_handler = controls_handler
 
         # to store ids and states of painted cell images
         self._game_field_cells: t.Dict[Point, t.Tuple[int, CellState]] = {}
@@ -116,9 +115,6 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._digit_images = {str(digit): tk.PhotoImage(file=str(gfx_resources_path / f"{digit}.png"))
                               for digit in range(10)}
         self.show_score(0)
-
-        if callable(self._controls_handler.skin_change_func):
-            self._controls_handler.skin_change_func()
 
         # Stop any music if any and run new
         [i.stop() for i in self._current_music]
@@ -220,19 +216,17 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
 
 def main():
     """
-    Connects UI and game logic
+    Connects GUI, controls and game logic
     """
     controls_handler = ch.ControlsHandler()
 
-    ui_root = TkTetrisUI(controls_handler)
-
-    # Bind keyboard listener
+    # Create main GUI class and bind controls handler to it
+    ui_root = TkTetrisUI()
     ui_root.bind(sequence='<KeyPress>', func=controls_handler.on_key_press)
     ui_root.bind(sequence='<KeyRelease>', func=controls_handler.on_key_release)
 
-    # Game field binds UI and logic together
-    game.Game(controls_handler=controls_handler,
-              ui_root=ui_root)
+    # Game logic class - binds GUI, controls and logic together
+    game.Game(controls_handler=controls_handler, ui_root=ui_root)
 
     ui_root.geometry("+800+300")
 
