@@ -4,7 +4,7 @@ import traceback
 import tkinter as tk
 import typing as t
 
-import simpleaudio as sa
+from simpleaudio import PlayObject
 
 from modules.abstract_ui import AbstractGUI
 from modules.controls_handler import ControlsHandler
@@ -33,7 +33,7 @@ class TkTetrisGUI(tk.Tk, AbstractGUI):  # pylint: disable=too-many-instance-attr
 
         self._pause_image_id: t.Optional[int] = None  # to toggle pause
         self._base_canvas: t.Optional[tk.Canvas] = None
-        self._current_music: t.List[sa.PlayObject] = []
+        self._current_music: t.List[PlayObject] = []
         self._current_skin_rb: tk.StringVar  # this is for radiobutton
         self._loaded_skin: t.Optional[str] = None  # this is to control loading skin if it's already loaded
         self.skin: Skin
