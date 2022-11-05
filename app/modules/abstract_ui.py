@@ -3,7 +3,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from .figures import Point
-from .skin import SoundResources
+from .skin import Sounds
 from .field import CellState
 
 
@@ -48,7 +48,7 @@ class AbstractGUI(ABC):
 
     @property
     @abstractmethod
-    def sounds(self) -> SoundResources:
+    def sounds(self) -> Sounds:
         """
         Returns dataclass with game sounds
         """

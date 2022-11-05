@@ -6,19 +6,18 @@ import typing as t
 
 import simpleaudio as sa
 
-from modules.skin import Skin
 from modules.abstract_ui import AbstractGUI
 from modules.controls_handler import ControlsHandler
 from modules.game import Game
 from modules.field import CellState
 from modules.figures import Point
 from modules.logger import logger
-from modules.skin import SoundResources
+from modules.skin import Skin, Sounds, get_skin
 
 VERSION = '1.2d'
 
 
-class TkTetrisGUI(tk.Tk, AbstractGUI):
+class TkTetrisGUI(tk.Tk, AbstractGUI):  # pylint: disable=too-many-instance-attributes  # Not sure what to do here
     """
     Main window class
     """
@@ -47,13 +46,13 @@ class TkTetrisGUI(tk.Tk, AbstractGUI):
         self._load_skin()  # paint all stuff now
 
     @property
-    def sounds(self) -> SoundResources:
+    def sounds(self) -> Sounds:
         return self.skin.sounds
 
     def new_game(self):
         logger.info('Starting new game')
 
-    def _load_skin(self, skin_name='Matrix'):
+    def _load_skin(self, skin_name='Default'):
         """
         Loads gfx and sounds from resources and applies them
         """
@@ -61,7 +60,7 @@ class TkTetrisGUI(tk.Tk, AbstractGUI):
             return
 
         try:
-            self.skin = Skin(skin_name)
+            self.skin = get_skin(skin_name)
         except (KeyError, tk.TclError):
             logger.error(f'Cannot load skin "{skin_name}!')
             logger.debug(traceback.format_exc())
