@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from .figures import Point
 from .resources import SoundResources
-from .cell import CellState
+from .field import CellState
 
 
 class AbstractGUI(ABC):
@@ -32,12 +32,6 @@ class AbstractGUI(ABC):
     def new_game(self):
         """
         Actions on new game
-        """
-
-    @abstractmethod
-    def refresh_ui(self):
-        """
-        Trigger re-painting event
         """
 
     @abstractmethod

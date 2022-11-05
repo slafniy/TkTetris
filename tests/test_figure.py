@@ -1,3 +1,4 @@
+"""Tests for cases which are hard to reproduce"""
 import pytest
 
 import app.modules.figures as f
@@ -73,5 +74,6 @@ def i_figure_east_1_n2():
                             f.Point(5, 7)}, f.Point(4, 4))
                           ])
 def test_get_points(figure, position, next_rotation, expected_points, expected_position):
+    """Checks how Figure maps its matrix to field according to given coordinates and rotation"""
     assert figure.position == expected_position
     assert figure.get_points(position, next_rotation) == expected_points

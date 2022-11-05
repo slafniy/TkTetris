@@ -1,3 +1,4 @@
+"""Entry point and GUI"""
 import argparse
 import traceback
 import tkinter as tk
@@ -6,10 +7,10 @@ import typing as t
 import simpleaudio as sa
 import yaml
 
-import modules.abstract_ui as abstract_ui
-import modules.controls_handler as ch
-import modules.game as game
-from modules.cell import CellState
+from modules.abstract_ui import AbstractGUI
+from modules.controls_handler import ControlsHandler
+from modules.game import Game
+from modules.field import CellState
 from modules.figures import Point
 from modules.logger import logger
 from modules.resources import SoundResources, get_resources_path
@@ -55,7 +56,7 @@ class Skin:
                              for digit in range(10)}
 
 
-class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
+class TkTetrisGUI(tk.Tk, AbstractGUI):
     """
     Main window class
     """
@@ -127,7 +128,8 @@ class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
 
     def show_next_figure(self, points: t.Set[Point]):
         self._next_figure_points = points
-        [self.delete_image(i) for i in self._next_figure_image_ids]
+        for i in self._next_figure_image_ids:
+            self._base_canvas.delete(i)
         self._next_figure_image_ids = set()
         for x, y in points:
             _x = x * self.skin.cell_size + self.skin.next_figure_field_offset_x - self.skin.cell_anchor_offset_x
@@ -135,14 +137,9 @@ class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
             self._next_figure_image_ids.add(
                 self._base_canvas.create_image(_x, _y, anchor=tk.NW, image=self.skin.cell_falling_image))
 
-    def refresh_ui(self):
-        self._base_canvas.update()
-
-    def delete_image(self, img_id):
-        self._base_canvas.delete(img_id)
-
     def show_score(self, score: int):
-        [self.delete_image(i) for i in self._score_image_ids]
+        for i in self._score_image_ids:
+            self._base_canvas.delete(i)
         score_str = f'{score:04d}'
         for i, digit in enumerate(score_str):
             x = self.skin.score_digit_offset_x + i * self.skin.digit_width
@@ -165,7 +162,7 @@ class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
         for point in points:
             image_id, _ = self._game_field_cells.pop(point, None)
             if image_id is not None:
-                self.delete_image(image_id)
+                self._base_canvas.delete(image_id)
 
     def _paint_cells(self, points: t.Set[Point], state: CellState):
         cell_image = self.skin.cell_falling_image if state == CellState.FALLING else self.skin.cell_filled_image
@@ -177,7 +174,7 @@ class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
 
     def toggle_pause(self):
         if self._pause_image_id is not None:
-            self.delete_image(self._pause_image_id)
+            self._base_canvas.delete(self._pause_image_id)
             self._pause_image_id = None
         else:
             self._pause_image_id = self._base_canvas.create_image(self.skin.pause_image_offset_x,
@@ -216,7 +213,7 @@ def main():
     """
     Connects GUI, controls and game logic
     """
-    controls_handler = ch.ControlsHandler()
+    controls_handler = ControlsHandler()
 
     # Create main GUI class and bind controls handler to it
     gui = TkTetrisGUI()
@@ -225,7 +222,7 @@ def main():
     gui.geometry("+800+300")
 
     # Game logic class - binds GUI, controls and logic together
-    game.Game(controls_handler=controls_handler, gui=gui)
+    Game(controls_handler=controls_handler, gui=gui)
 
     # Start application
     gui.mainloop()

@@ -1,8 +1,10 @@
+"""Logger module that provides basic logger"""
 import logging
 import sys
 
 
 class Logger(logging.Logger):
+    """Pre-formatted logger"""
     def __init__(self, name: str, level):
         super().__init__(name)
         stream_handler = logging.StreamHandler(sys.stdout)

@@ -1,3 +1,4 @@
+"""Module that helps to load resources"""
 import pathlib
 import sys
 
@@ -14,8 +15,7 @@ class SoundResources:
             wav_path = get_resources_path() / skin_name / 'sound' / f'{x}.wav'
             if wav_path.exists():
                 return sa.WaveObject.from_wave_file(str(wav_path))
-            else:
-                raise RuntimeError(f'Cannot find {wav_path}')
+            raise RuntimeError(f'Cannot find {wav_path}')
 
         self.move = get_wav('move')
         self.rotate = get_wav('rotate')

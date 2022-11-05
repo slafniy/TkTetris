@@ -1,9 +1,8 @@
+"""Describes Tetris figures using matrix of coordinates"""
 import enum
 import itertools
 import random
 import typing as t
-
-from .logger import logger
 
 
 class Point(t.NamedTuple):
