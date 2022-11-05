@@ -3,7 +3,7 @@ import typing as t
 from abc import ABC, abstractmethod
 
 from .figures import Point
-from .resources import SoundResources
+from .skin import SoundResources
 from .field import CellState
 
 

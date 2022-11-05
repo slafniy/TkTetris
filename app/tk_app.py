@@ -5,55 +5,17 @@ import tkinter as tk
 import typing as t
 
 import simpleaudio as sa
-import yaml
 
+from modules.skin import Skin
 from modules.abstract_ui import AbstractGUI
 from modules.controls_handler import ControlsHandler
 from modules.game import Game
 from modules.field import CellState
 from modules.figures import Point
 from modules.logger import logger
-from modules.resources import SoundResources, get_resources_path
+from modules.skin import SoundResources
 
 VERSION = '1.2d'
-
-
-class Skin:
-    """Loads skin image and sound resources from files"""
-    def __init__(self, name: str):
-        self.sounds = SoundResources(name)  # Audio
-
-        gfx_resources_path = get_resources_path() / f'{name}' / 'gfx'
-
-        with (gfx_resources_path / "cfg.yaml").open() as yaml_file:
-            cfg = yaml.safe_load(yaml_file)
-
-        self.base_image = tk.PhotoImage(file=str(gfx_resources_path / "base.png"))
-
-        self.cell_size = cfg['cell_size']
-        self.game_field_offset_x = cfg['game_field_nw']['x']
-        self.game_field_offset_y = cfg['game_field_nw']['y']
-
-        self.next_figure_field_offset_x = cfg['next_figure_field_nw']['x']
-        self.next_figure_field_offset_y = cfg['next_figure_field_nw']['y']
-
-        self.cell_anchor_offset_x = cfg['cell_anchor_nw']['x']
-        self.cell_anchor_offset_y = cfg['cell_anchor_nw']['y']
-
-        self.cell_falling_image = tk.PhotoImage(file=str(gfx_resources_path / "cell_falling.png"))
-        self.cell_filled_image = tk.PhotoImage(file=str(gfx_resources_path / "cell_filled.png"))
-
-        self.pause_image = tk.PhotoImage(file=str(gfx_resources_path / "pause.png"))
-        self.pause_image_offset_x = cfg['pause_nw']['x']
-        self.pause_image_offset_y = cfg['pause_nw']['y']
-
-        # Scores
-        self.score_digit_offset_x = cfg['score_digit_nw']['x']
-        self.score_digit_offset_y = cfg['score_digit_nw']['y']
-        self.digit_width = cfg['digit_size']['width']
-        self.digit_height = cfg['digit_size']['height']
-        self.digit_images = {str(digit): tk.PhotoImage(file=str(gfx_resources_path / f"{digit}.png"))
-                             for digit in range(10)}
 
 
 class TkTetrisGUI(tk.Tk, AbstractGUI):
