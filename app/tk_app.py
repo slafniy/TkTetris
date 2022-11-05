@@ -67,7 +67,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         return self._sounds
 
     def new_game(self):
-        pass
+        logger.info('Starting new game')
 
     def _load_skin(self, skin_name='Default'):
         """
@@ -204,6 +204,8 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
                               variable=self._current_skin_rb, value='Default')
         popup.add_radiobutton(label="Matrix", command=lambda: self._load_skin('Matrix'),
                               variable=self._current_skin_rb, value='Matrix')
+        popup.add_separator()
+        popup.add_command(label='New Game', command=self.new_game)
 
         def menu_popup(event):
             # display the popup menu

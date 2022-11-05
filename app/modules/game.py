@@ -95,17 +95,17 @@ class Game:
         pass
 
     def _move_left(self):
-        if self._field.move_left():
-            self._ui_root.sounds.move.play()
+        self._field.move_left()
+        self._ui_root.sounds.move.play()
 
     def _move_right(self):
-        if self._field.move_right():
-            self._ui_root.sounds.move.play()
+        self._field.move_right()
+        self._ui_root.sounds.move.play()
 
     def _force_down(self):
         self._forcing_speed = True
         new_tick = self._calc_force_down_tick(self._current_tick)
-        logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
+        # logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
         self.tick_thread.set_tick(new_tick)
 
     def _force_down_cancel(self):
