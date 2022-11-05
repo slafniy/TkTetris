@@ -46,6 +46,12 @@ class AbstractUI(ABC):
         Show the next figure in the separate field
         """
 
+    @abstractmethod
+    def show_score(self, score: int):
+        """
+        Show given score number
+        """
+
     @property
     @abstractmethod
     def sounds(self) -> SoundResources:

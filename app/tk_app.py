@@ -114,8 +114,8 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
         self._digit_width = cfg['digit_size']['width']
         self._digit_height = cfg['digit_size']['height']
         self._digit_images = {str(digit): tk.PhotoImage(file=str(gfx_resources_path / f"{digit}.png"))
-                              for digit in range(9)}
-        self._show_score(0)
+                              for digit in range(10)}
+        self.show_score(0)
 
         if callable(self._controls_handler.skin_change_func):
             self._controls_handler.skin_change_func()
@@ -147,7 +147,7 @@ class TkTetrisUI(tk.Tk, abstract_ui.AbstractUI):
     def delete_image(self, img_id):
         self._base_canvas.delete(img_id)
 
-    def _show_score(self, score: int):
+    def show_score(self, score: int):
         [self.delete_image(i) for i in self._score_image_ids]
         score_str = f'{score:04d}'
         for i, digit in enumerate(score_str):

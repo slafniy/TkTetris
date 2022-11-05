@@ -48,6 +48,7 @@ class Game:
         self.paused = False
         self._game_over = False
         self._forcing_speed = False
+        self._score = 0
 
         self.tick_thread = TickThread(self._tick, TICK_INTERVAL)
         self.tick_thread.start()
@@ -70,10 +71,12 @@ class Game:
                 self._current_tick *= LEVEL_MULTIPLIER
                 if not self._forcing_speed:
                     self.tick_thread.set_tick(self._current_tick)
+                self._score += 10
+                self._ui_root.show_score(self._score)
 
             # Figure hit the bottom
             elif event.event_type == FieldEventType.FIGURE_FIXED:
-                pass #self._force_down_cancel()  # to avoid smashing the next one
+                self._ui_root.sounds.fix_figure.play()
 
             # Game over
             elif event.event_type == FieldEventType.GAME_OVER:
