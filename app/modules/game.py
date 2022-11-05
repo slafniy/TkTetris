@@ -16,7 +16,7 @@ FIELD_HEIGHT = 20  # In cells
 FIELD_WIDTH = 10  # In cells
 
 
-class Game:
+class Game:  # pylint: disable=too-few-public-methods
     """
     Contains information about game logic
     """
@@ -98,9 +98,6 @@ class Game:
     def _on_new_game(self):
         pass
 
-    def _repaint_all(self):
-        pass
-
     def _on_move_left(self):
         self._field.move_left()
         self.gui.sounds.move.play()
@@ -111,24 +108,13 @@ class Game:
 
     def _on_force_down(self):
         self._forcing_speed = True
-        new_tick = self._calc_force_down_tick(self._current_tick)
+        new_tick = _calc_force_down_tick(self._current_tick)
         # logger.debug(f'SPEEDUP: {self._current_tick} => {new_tick}')
         self.tick_thread.set_tick(new_tick)
 
     def _on_force_down_cancel(self):
         self._forcing_speed = False
         self.tick_thread.set_tick(self._current_tick)
-
-    @staticmethod
-    @lru_cache
-    def _calc_force_down_tick(basic_tick: float) -> float:
-        """doesn't go lower than 0.01 sec ()
-         - in this case will be equal to tick."""
-        k = 0.15
-        # basic_tick_limit = 0.15
-        high_speed_tick = basic_tick * k
-        # high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
-        return high_speed_tick
 
     def _on_pause(self):
         self.paused = not self.paused
@@ -146,3 +132,14 @@ class Game:
 
         self._field.tick()
         self.gui.sounds.tick.play()
+
+
+@lru_cache
+def _calc_force_down_tick(basic_tick: float) -> float:
+    """doesn't go lower than 0.01 sec ()
+     - in this case will be equal to tick."""
+    k = 0.15
+    # basic_tick_limit = 0.15
+    high_speed_tick = basic_tick * k
+    # high_speed_tick = basic_tick if high_speed_tick < limit else high_speed_tick
+    return high_speed_tick

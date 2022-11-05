@@ -8,7 +8,7 @@ def l_figure_north_0_0():
     """Returns L figure placed at (0,0) and rotated to north"""
     fig = f.LFigure()
     fig.position = f.Point(0, 0)
-    while fig._rotation != f.Rotation.NORTH:
+    while fig._rotation != f.Rotation.NORTH:  # pylint: disable=protected-access
         fig.rotate()
     return fig
 
