@@ -31,7 +31,7 @@ def get_resources_path() -> pathlib.Path:
     Need this for PyInstaller
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        base_path = pathlib.Path(sys._MEIPASS) / 'app'  # pylint: protected-access
+        base_path = pathlib.Path(sys._MEIPASS) / 'app'  # pylint: disable=protected-access
     else:
         base_path = pathlib.Path(__file__).parent.parent
     return base_path / 'res'

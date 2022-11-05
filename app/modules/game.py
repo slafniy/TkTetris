@@ -16,7 +16,7 @@ FIELD_HEIGHT = 20  # In cells
 FIELD_WIDTH = 10  # In cells
 
 
-class Game:  # pylint: disable=too-few-public-methods
+class Game:  # pylint: disable=too-few-public-methods, too-many-instance-attributes
     """
     Contains information about game logic
     """
