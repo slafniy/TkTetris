@@ -1,7 +1,13 @@
+# Cell params
 cell_size: 24  # logical size, may not match picture size
 cell_anchor_nw: # offset point on the cell image to allow overlapping or gap between cells
   x: 0
   y: 0
+
+# Digit params - to show scores, level etc
+digit_size:
+  width: 20
+  height: 20
 
 # Anchor points on base image
 game_field_nw:
@@ -13,4 +19,6 @@ next_figure_field_nw:
 pause_nw:
   x: 250
   y: 400
-
+score_digit_nw:
+  x: 252
+  y: 40

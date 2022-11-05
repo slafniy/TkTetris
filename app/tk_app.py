@@ -14,12 +14,11 @@ from modules.figures import Point
 from modules.logger import logger
 from modules.resources import SoundResources, get_resources_path
 
-VERSION = '1.1d'
-
-COLOR_BACKGROUND = "#000000"
+VERSION = '1.2d'
 
 
 class Skin:
+    """Loads skin image and sound resources from files"""
     def __init__(self, name: str):
         self.sounds = SoundResources(name)  # Audio
 
@@ -91,7 +90,7 @@ class TkTetrisGUI(tk.Tk, abstract_ui.AbstractGUI):
     def new_game(self):
         logger.info('Starting new game')
 
-    def _load_skin(self, skin_name='Default'):
+    def _load_skin(self, skin_name='Matrix'):
         """
         Loads gfx and sounds from resources and applies them
         """

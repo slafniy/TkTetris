@@ -7,8 +7,8 @@ from .controls_handler import ControlEventType, ControlsHandler, Commands
 from .abstract_ui import AbstractGUI
 from .logger import logger
 
-TICK_INTERVAL = 0.68
-LEVEL_MULTIPLIER = 0.9
+TICK_INTERVAL = 0.8
+LEVEL_DECREASE = 0.025
 
 # Default field parameters
 FIELD_HIDDEN_TOP_ROWS_NUMBER = 4
@@ -74,7 +74,8 @@ class Game:
             # We got full row here
             elif event.event_type == FieldEventType.ROW_REMOVED:
                 self.gui.sounds.row_delete.play()
-                self._current_tick *= LEVEL_MULTIPLIER
+                self._current_tick = self._current_tick \
+                    if self._current_tick <= LEVEL_DECREASE else self._current_tick - LEVEL_DECREASE
                 if not self._forcing_speed:
                     self.tick_thread.set_tick(self._current_tick)
                 self._score += 10
