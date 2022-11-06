@@ -33,6 +33,6 @@ jobs:
         label: PyTest
         message: ${{ env.PASSED_PERCENT }}% PASSED
         valColorRange: ${{ env.PASSED_PERCENT }}
-        maxColorRange: 10
+        maxColorRange: 100
         minColorRange: 0
         invertColorRange: true
