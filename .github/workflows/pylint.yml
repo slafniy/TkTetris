@@ -20,7 +20,7 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error  # because it gives false positive result)
+        PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error)
         echo $PYLINT_OUTPUT
     - name: Create Awesome Badge
       uses: schneegans/dynamic-badges-action@v1.6.0
