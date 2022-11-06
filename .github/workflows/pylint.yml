@@ -33,6 +33,6 @@ jobs:
         label: PyLint
         message: ${{ env.PYLINT_RESULT }}/10
         valColorRange: ${{ env.PYLINT_RESULT }}
-        maxColorRange: 100
+        maxColorRange: 10
         minColorRange: 0
         invertColorRange: true
