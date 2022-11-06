@@ -21,7 +21,7 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error  # because it gives false positive result)
-        echo PYLINT_OUTPUT
+        echo $PYLINT_OUTPUT
     - name: Create Awesome Badge
       uses: schneegans/dynamic-badges-action@v1.6.0
       with:
