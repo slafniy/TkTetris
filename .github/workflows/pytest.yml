@@ -35,4 +35,3 @@ jobs:
         valColorRange: ${{ env.PASSED_PERCENT }}
         maxColorRange: 100
         minColorRange: 0
-        invertColorRange: true
