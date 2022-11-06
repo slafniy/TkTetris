@@ -20,8 +20,10 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error | grep "Your code has been rated at" | grep -Po "[\d+\.]+\/10")
-        echo "PYLINT_RESULT=$OUTPUT" >> $GITHUB_ENV
+        PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error)
+        echo $PYLINT_OUTPUT
+        PYLINT_SCORE=$(echo $PYLINT_OUTPUT | grep "Your code has been rated at" | grep -Po "[\d+\.]+\/10")
+        echo "PYLINT_RESULT=$PYLINT_SCORE" >> $GITHUB_ENV
     - name: Create Awesome Badge
       uses: schneegans/dynamic-badges-action@v1.6.0
       with:
@@ -29,5 +31,5 @@ jobs:
         gistID: 262b6c9c274ee1fff6cde56c1cade09c
         filename: badgetest.json
         label: Hello
-        message: World
+        message: ${{ PYLINT_RESULT }}
         color: orange
