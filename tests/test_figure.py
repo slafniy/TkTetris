@@ -60,6 +60,5 @@ def figure(figure_type: t.Type[f.Figure], position: f.Point, rotation: f.Rotatio
 def test_get_points(f_type, f_position, f_rotation, next_rotation, expected_matrix):
     """Checks how Figure maps its matrix to field according to given coordinates and rotation"""
     fig = figure(f_type, f_position, f_rotation)
-    assert False  # to check github workflow
     assert fig.position == f_position
     assert fig.get_points(None, next_rotation) == expected_matrix  # check figure matrix
