@@ -22,7 +22,8 @@ jobs:
       run: |
         OUT=$(pytest)
         echo $OUT
-        PASSED_PERCENT=$(python .github/workflows/pytest_badge.py "$OUT") >> $GITHUB_ENV
+        OUT=$(python .github/workflows/pytest_badge.py "$OUT") >> $GITHUB_ENV
+        echo "PASSED_PERCENT=$OUT" >> $GITHUB_ENV
     - name: Create Awesome Badge
       uses: schneegans/dynamic-badges-action@v1.6.0
       with:

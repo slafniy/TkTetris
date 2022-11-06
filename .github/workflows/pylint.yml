@@ -32,7 +32,7 @@ jobs:
         filename: tktetris_pylint_result.json
         label: PyLint
         message: ${{ env.PYLINT_RESULT }}/10
-        valColorRange: ${{ env.PYLINT_RESULT }} * 10
+        valColorRange: ${{ env.PYLINT_RESULT }}
         maxColorRange: 100
         minColorRange: 0
         invertColorRange: true
