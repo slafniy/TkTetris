@@ -22,7 +22,7 @@ jobs:
       run: |
         PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error)
         echo $PYLINT_OUTPUT
-        PYLINT_SCORE=$(echo $PYLINT_OUTPUT | grep "Your code has been rated at" | grep -Po "[\d+\.]+\/10")
+        PYLINT_SCORE=$(echo $PYLINT_OUTPUT | grep "Your code has been rated at" | grep -Po "[\d+\.]+\/10" | grep -Po "\d+\.\d+")
         echo "PYLINT_RESULT=$PYLINT_SCORE" >> $GITHUB_ENV
     - name: Create Awesome Badge
       uses: schneegans/dynamic-badges-action@v1.6.0
@@ -30,6 +30,8 @@ jobs:
         auth: ${{ secrets.GIST_SECRET }}
         gistID: 262b6c9c274ee1fff6cde56c1cade09c
         filename: badgetest.json
-        label: Hello
-        message: is ${{ env.PYLINT_RESULT }}
-        color: orange
+        label: PyLint
+        message: ${{ env.PYLINT_RESULT }}/10
+        valColorRange: ${{ env.PYLINT_RESULT }}
+        maxColorRange: 100
+        minColorRange: 0
