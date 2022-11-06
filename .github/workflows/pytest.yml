@@ -27,7 +27,7 @@ jobs:
       uses: schneegans/dynamic-badges-action@v1.6.0
       with:
         auth: ${{ secrets.GIST_SECRET }}
-        gistID: 262b6c9c274ee1fff6cde56c1cade09c
+        gistID: 8c00a9f263b3b7e10d6dddcfe64aea35
         filename: tktetris_pytest_result.json
         label: PyTest
         message: ${{ env.PASSED_PERCENT }}% PASSED
