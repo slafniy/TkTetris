@@ -35,3 +35,4 @@ jobs:
         valColorRange: ${{ env.PYLINT_RESULT }}
         maxColorRange: 100
         minColorRange: 0
+        invertColorRange: true
