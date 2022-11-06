@@ -1,38 +1,38 @@
 name: Pylint
 
-on: [push]
+on: [ push ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: [ "3.11" ]
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
-      run: |
-        PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error)
-        echo $PYLINT_OUTPUT
-        PYLINT_SCORE=$(echo $PYLINT_OUTPUT | grep "Your code has been rated at" | grep -Po "[\d+\.]+\/10" | grep -Po "\d+\.\d+")
-        echo "PYLINT_RESULT=$PYLINT_SCORE" >> $GITHUB_ENV
-    - name: Create Awesome Badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
-      with:
-        auth: ${{ secrets.GIST_SECRET }}
-        gistID: 8c00a9f263b3b7e10d6dddcfe64aea35
-        filename: tktetris_pylint_result.json
-        label: PyLint
-        message: ${{ env.PYLINT_RESULT }}/10
-        valColorRange: ${{ env.PYLINT_RESULT }} * 10
-        maxColorRange: 100
-        minColorRange: 0
-        invertColorRange: true
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+      - name: Analysing the code with pylint
+        run: |
+          PYLINT_OUTPUT=$(pylint $(git ls-files '*.py')  --disable=import-error)
+          echo $PYLINT_OUTPUT
+          PYLINT_SCORE=$(echo $PYLINT_OUTPUT | grep "Your code has been rated at" | grep -Po "[\d+\.]+\/10" | grep -Po "\d+\.\d+")
+          echo "PYLINT_RESULT=$PYLINT_SCORE" >> $GITHUB_ENV
+      - name: Create Awesome Badge
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 8c00a9f263b3b7e10d6dddcfe64aea35
+          filename: tktetris_pylint_result.json
+          label: PyLint
+          message: ${{ env.PYLINT_RESULT }}/10
+          valColorRange: ${{ env.PYLINT_RESULT }} * 10
+          maxColorRange: 100
+          minColorRange: 0
+          invertColorRange: true

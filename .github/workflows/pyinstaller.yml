@@ -1,0 +1,27 @@
+name: PyInstaller
+
+on: [ push ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [ "3.11" ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          py -${{ matrix.python-version }} -m pip install --upgrade pip
+      - name: Build executable with PyInstaller
+        run: |
+          .\build_windows.bat
+      - name: Collect artifacts
+      - uses: actions/upload-artifact@v3
+        with:
+          name: TkTetris
+          path: dist/tk_app.exe

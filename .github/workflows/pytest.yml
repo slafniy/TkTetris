@@ -1,37 +1,37 @@
 name: PyTest
 
-on: [push]
+on: [ push ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: [ "3.11" ]
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest
-    - name: Running tests
-      run: |
-        OUT=$(pytest)
-        echo $OUT
-        OUT=$(python .github/workflows/pytest_badge.py "$OUT") >> $GITHUB_ENV
-        echo "PASSED_PERCENT=$OUT" >> $GITHUB_ENV
-    - name: Create Awesome Badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
-      with:
-        auth: ${{ secrets.GIST_SECRET }}
-        gistID: 8c00a9f263b3b7e10d6dddcfe64aea35
-        filename: tktetris_pytest_result.json
-        label: PyTest
-        message: ${{ env.PASSED_PERCENT }}% PASSED
-        valColorRange: ${{ env.PASSED_PERCENT }}
-        maxColorRange: 100
-        minColorRange: 0
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      - name: Running tests
+        run: |
+          OUT=$(pytest)
+          echo $OUT
+          OUT=$(python .github/workflows/pytest_badge.py "$OUT") >> $GITHUB_ENV
+          echo "PASSED_PERCENT=$OUT" >> $GITHUB_ENV
+      - name: Create Awesome Badge
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 8c00a9f263b3b7e10d6dddcfe64aea35
+          filename: tktetris_pytest_result.json
+          label: PyTest
+          message: ${{ env.PASSED_PERCENT }}% PASSED
+          valColorRange: ${{ env.PASSED_PERCENT }}
+          maxColorRange: 100
+          minColorRange: 0
