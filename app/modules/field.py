@@ -95,9 +95,10 @@ class Field:
             return False
         with self._field_lock:
             for position in [self._figure.position,
-                             (Point(self._figure.position[0] - 1, self._figure.position[1])),
-                             (Point(self._figure.position[0], self._figure.position[1] - 1)),
-                             (Point(self._figure.position[0] - 1, self._figure.position[1] - 1))]:
+                             (Point(self._figure.position.x - 1, self._figure.position.y)),
+                             (Point(self._figure.position.x + 1, self._figure.position.y)),
+                             (Point(self._figure.position.x - 2, self._figure.position.y)),
+                             (Point(self._figure.position.x + 2, self._figure.position.y))]:
                 if self._try_place(position, next_rotation=True):
                     return True
             return False
