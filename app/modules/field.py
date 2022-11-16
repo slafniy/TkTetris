@@ -51,8 +51,8 @@ class Field:
         self.height = height
         self._cell_states = [[CellState.EMPTY for _ in range(height)] for _ in range(width)]
         self._field_lock = threading.RLock()  # block simultaneous changes
-        self._figure: t.Optional[Figure] = None  # Current falling figure
-        self._next_figure: t.Optional[Figure] = random.choice(all_figures)()  # Next figure to spawn
+        self._figure: Figure | None = None  # Current falling figure
+        self._next_figure: Figure | None = random.choice(all_figures)()  # Next figure to spawn
         self.events_q: "Queue[FieldEvent]" = Queue()  # cells events
 
     def _move(self, x_diff=0, y_diff=0) -> bool:
@@ -156,7 +156,7 @@ class Field:
                                          CellState.FILLED: cells_to_move_down}))
         self.events_q.put(FieldEvent(FieldEventType.ROW_REMOVED))
 
-    def _get_full_row(self) -> t.Optional[int]:
+    def _get_full_row(self) -> int | None:
         with self._field_lock:
             for y in range(self.height - 1, -1, -1):
                 is_full = True
@@ -168,7 +168,7 @@ class Field:
                     return y
             return None
 
-    def _can_place(self, points: t.Set[Point]) -> bool:
+    def _can_place(self, points: set[Point]) -> bool:
         """Check if given set of points could be placed on field -
             it checks if it isn't out of borders and there is no filled cells"""
         with self._field_lock:
@@ -178,7 +178,7 @@ class Field:
                     return False
             return True
 
-    def _apply_changes(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]):
+    def _apply_changes(self, changed_points: t.OrderedDict[CellState, set[Point]]):
         """Apply a bunch of changes to the field"""
         with self._field_lock:
             for cell_state, points in changed_points.items():

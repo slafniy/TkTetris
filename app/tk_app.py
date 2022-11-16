@@ -27,19 +27,19 @@ class TkTetrisGUI(tk.Tk, AbstractGUI):  # pylint: disable=too-many-instance-attr
         self.title(f'TkTetris {VERSION}')
 
         # to store ids and states of painted cell images
-        self._game_field_cells: t.Dict[Point, t.Tuple[int, CellState]] = {}
+        self._game_field_cells: dict[Point, tuple[int, CellState]] = {}
 
         self._prepare_ui()  # initialize menus and binds
 
-        self._pause_image_id: t.Optional[int] = None  # to toggle pause
-        self._base_canvas: t.Optional[tk.Canvas] = None
-        self._current_music: t.List[PlayObject] = []
+        self._pause_image_id: int | None = None  # to toggle pause
+        self._base_canvas: tk.Canvas | None = None
+        self._current_music: list[PlayObject] = []
         self._current_skin_rb: tk.StringVar  # this is for radiobutton
-        self._loaded_skin: t.Optional[str] = None  # this is to control loading skin if it's already loaded
+        self._loaded_skin: str | None = None  # this is to control loading skin if it's already loaded
         self.skin: Skin
 
-        self._next_figure_points: t.Set[Point] = set()  # store to repaint if skin changed
-        self._next_figure_image_ids: t.Set[int] = set()
+        self._next_figure_points: set[Point] = set()  # store to repaint if skin changed
+        self._next_figure_image_ids: set[int] = set()
 
         self._score_image_ids = set()
 
@@ -87,7 +87,7 @@ class TkTetrisGUI(tk.Tk, AbstractGUI):  # pylint: disable=too-many-instance-attr
             if cell[1] == CellState.FILLED:
                 self._paint_cell(point, self.skin.cell_filled_image)
 
-    def show_next_figure(self, points: t.Set[Point]):
+    def show_next_figure(self, points: set[Point]):
         self._next_figure_points = points
         for i in self._next_figure_image_ids:
             self._base_canvas.delete(i)
@@ -112,20 +112,20 @@ class TkTetrisGUI(tk.Tk, AbstractGUI):  # pylint: disable=too-many-instance-attr
         y = point.y * self.skin.cell_size + self.skin.game_field_offset_y - self.skin.cell_anchor_offset_y
         return self._base_canvas.create_image(x, y, anchor=tk.NW, image=cell_image)
 
-    def apply_field_change(self, changed_points: t.OrderedDict[CellState, t.Set[Point]]):
+    def apply_field_change(self, changed_points: t.OrderedDict[CellState, set[Point]]):
         for cell_state, points in changed_points.items():
             if cell_state == CellState.EMPTY:
                 self._remove_cells(points)
             else:
                 self._paint_cells(points, cell_state)
 
-    def _remove_cells(self, points: t.Set[Point]):
+    def _remove_cells(self, points: set[Point]):
         for point in points:
             image_id, _ = self._game_field_cells.pop(point, None)
             if image_id is not None:
                 self._base_canvas.delete(image_id)
 
-    def _paint_cells(self, points: t.Set[Point], state: CellState):
+    def _paint_cells(self, points: set[Point], state: CellState):
         cell_image = self.skin.cell_falling_image if state == CellState.FALLING else self.skin.cell_filled_image
         for point in points:
             self._game_field_cells[point] = (self._paint_cell(point, cell_image), state)

@@ -35,7 +35,7 @@ class AbstractGUI(ABC):
         """
 
     @abstractmethod
-    def show_next_figure(self, points: t.Set[Point]):
+    def show_next_figure(self, points: set[Point]):
         """
         Show the next figure in the separate field
         """

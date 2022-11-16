@@ -68,32 +68,33 @@ class Game:  # pylint: disable=too-few-public-methods, too-many-instance-attribu
             # logger.debug(f'Event received, type={event.event_type}')
 
             # Apply changes on the game field
-            if event.event_type == FieldEventType.CELL_STATE_CHANGE:
-                self.gui.apply_field_change(event.payload)
+            match event.event_type:
+                case FieldEventType.CELL_STATE_CHANGE:
+                    self.gui.apply_field_change(event.payload)
 
-            # We got full row here
-            elif event.event_type == FieldEventType.ROW_REMOVED:
-                self.gui.sounds.row_delete.play()
-                self._current_tick = self._current_tick \
-                    if self._current_tick <= LEVEL_DECREASE else self._current_tick - LEVEL_DECREASE
-                if not self._forcing_speed:
-                    self.tick_thread.set_tick(self._current_tick)
-                self._score += 10
-                self.gui.show_score(self._score)
+                # We got full row here
+                case FieldEventType.ROW_REMOVED:
+                    self.gui.sounds.row_delete.play()
+                    self._current_tick = self._current_tick \
+                        if self._current_tick <= LEVEL_DECREASE else self._current_tick - LEVEL_DECREASE
+                    if not self._forcing_speed:
+                        self.tick_thread.set_tick(self._current_tick)
+                    self._score += 10
+                    self.gui.show_score(self._score)
 
-            # Figure hit the bottom
-            elif event.event_type == FieldEventType.FIGURE_FIXED:
-                self.gui.sounds.fix_figure.play()
+                # Figure hit the bottom
+                case FieldEventType.FIGURE_FIXED:
+                    self.gui.sounds.fix_figure.play()
 
-            # Game over
-            elif event.event_type == FieldEventType.GAME_OVER:
-                self._game_over = True
-                self.tick_thread.stop()
-                self.gui.sounds.game_over.play()
+                # Game over
+                case FieldEventType.GAME_OVER:
+                    self._game_over = True
+                    self.tick_thread.stop()
+                    self.gui.sounds.game_over.play()
 
-            # Next figure known
-            elif event.event_type == FieldEventType.NEW_FIGURE:
-                self.gui.show_next_figure(event.payload)
+                # Next figure known
+                case FieldEventType.NEW_FIGURE:
+                    self.gui.show_next_figure(event.payload)
 
     def _on_new_game(self):
         pass

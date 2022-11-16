@@ -2,7 +2,6 @@
 import dataclasses
 import pathlib
 import sys
-import typing as t
 import tkinter as tk
 
 import simpleaudio as sa
@@ -46,7 +45,7 @@ class Skin:  # pylint: disable=too-many-instance-attributes # it's fine for a da
     cell_anchor_offset_y: int
 
     # Score digits
-    digit_images: t.Dict[str, tk.PhotoImage]
+    digit_images: dict[str, tk.PhotoImage]
     digit_width: int
     digit_height: int
     score_digit_offset_x: int

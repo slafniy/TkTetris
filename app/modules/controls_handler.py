@@ -27,7 +27,7 @@ TICK_DELAY = 0.2
 class _KeyEventParams:
     """Stores info about pressed key"""
     is_pressed: bool = False
-    press_time: t.Optional[float] = None
+    press_time: float | None = None
     has_been_processed_once: bool = False
 
 

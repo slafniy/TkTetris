@@ -19,20 +19,20 @@ class Rotation(enum.IntEnum):
     WEST = 3
 
 
-class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
+class Figure(dict[Rotation, set[tuple[int, int]]]):
     """
     Saves a set of figure points and rules of rotation
     """
 
     def __init__(self):
         super().__init__()
-        self.position: t.Optional[Point] = None  # Stores position on field
+        self.position: Point | None = None  # Stores position on field
         self._rotation_generator = itertools.cycle(Rotation)
         for _ in range(random.randint(1, 4)):
             self._rotation = next(self._rotation_generator)
         self._next_rotation = next(self._rotation_generator)
 
-    def _rotation_matrix(self, rotation=None) -> t.Set[Point]:
+    def _rotation_matrix(self, rotation=None) -> set[Point]:
         """Return rotation matrix"""
         return {Point(x, y) for x, y in self.get(rotation if rotation is not None else self._rotation, set())}
 
@@ -43,7 +43,7 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
         self._rotation = self._next_rotation
         self._next_rotation = next(self._rotation_generator)
 
-    def get_points(self, position: t.Optional[Point] = None, next_rotation=False) -> t.Set[Point]:
+    def get_points(self, position: Point | None = None, next_rotation=False) -> set[Point]:
         """
         Calculate coordinates of each point of the figure for given position
         :param position: - if None current position will be used for calculations
@@ -58,9 +58,7 @@ class Figure(t.Dict[Rotation, t.Set[t.Tuple[int, int]]]):
 
 
 class ZFigure(Figure):
-    """
-    Represents "Z" figure
-    """
+    """Represents "Z" figure """
 
     def __init__(self):
         super().__init__()
@@ -69,9 +67,7 @@ class ZFigure(Figure):
 
 
 class SFigure(Figure):
-    """
-    Represents "Z" figure
-    """
+    """Represents "S" figure"""
 
     def __init__(self):
         super().__init__()
@@ -80,9 +76,7 @@ class SFigure(Figure):
 
 
 class TFigure(Figure):
-    """
-    Represents "T" figure
-    """
+    """Represents "T" figure"""
 
     def __init__(self):
         super().__init__()
@@ -93,9 +87,7 @@ class TFigure(Figure):
 
 
 class IFigure(Figure):
-    """
-    Represents "I" figure
-    """
+    """Represents "I" figure"""
 
     def __init__(self):
         super().__init__()
@@ -104,9 +96,7 @@ class IFigure(Figure):
 
 
 class OFigure(Figure):
-    """
-    Represents "O" figure
-    """
+    """Represents "O" figure"""
 
     def __init__(self):
         super().__init__()
@@ -115,9 +105,7 @@ class OFigure(Figure):
 
 
 class LFigure(Figure):
-    """
-    Represents "L" figure
-    """
+    """Represents "L" figure"""
 
     def __init__(self):
         super().__init__()
@@ -128,9 +116,7 @@ class LFigure(Figure):
 
 
 class RLFigure(Figure):
-    """
-    Represents "Reversed L" figure
-    """
+    """Represents "Reversed L" figure"""
 
     def __init__(self):
         super().__init__()
